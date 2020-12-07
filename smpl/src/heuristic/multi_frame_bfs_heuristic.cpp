@@ -64,7 +64,7 @@ bool MultiFrameBfsHeuristic::init(
 
     m_pp = space->getExtension<PointProjectionExtension>();
     if (m_pp) {
-        SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
+        // SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
     }
     m_ers = space->getExtension<ExtractRobotStateExtension>();
     if (m_ers) {

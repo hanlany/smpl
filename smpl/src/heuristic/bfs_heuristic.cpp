@@ -62,7 +62,7 @@ bool BfsHeuristic::init(RobotPlanningSpace* space, const OccupancyGrid* grid)
 
     m_pp = space->getExtension<PointProjectionExtension>();
     if (m_pp != NULL) {
-        SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
+        // SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
     }
     syncGridAndBfs();
 

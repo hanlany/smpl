@@ -254,7 +254,7 @@ void RobotCollisionState::initRobotState()
     m_dirty_link_transforms[0] = false;
     m_link_transform_versions[0] = 0;
 
-    ROS_DEBUG_NAMED(RCS_LOGGER, "Robot State:");
+    // ROS_DEBUG_NAMED(RCS_LOGGER, "Robot State:");
     ROS_DEBUG_NAMED(RCS_LOGGER, "  %zu Joint Positions", m_jvar_positions.size());
     ROS_DEBUG_NAMED(RCS_LOGGER, "  %zu Dirty Link Transforms", m_dirty_link_transforms.size());
     ROS_DEBUG_NAMED(RCS_LOGGER, "  %zu Link Transforms", m_link_transforms.size());

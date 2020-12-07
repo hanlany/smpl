@@ -291,11 +291,11 @@ PlannerInterface::~PlannerInterface()
 
 bool PlannerInterface::init(const PlanningParams& params)
 {
-    SMPL_INFO_NAMED(PI_LOGGER, "Initialize planner interface");
+    // SMPL_INFO_NAMED(PI_LOGGER, "Initialize planner interface");
 
-    SMPL_INFO_NAMED(PI_LOGGER, "  Shortcut Path: %s", params.shortcut_path ? "true" : "false");
-    SMPL_INFO_NAMED(PI_LOGGER, "  Shortcut Type: %s", to_string(params.shortcut_type).c_str());
-    SMPL_INFO_NAMED(PI_LOGGER, "  Interpolate Path: %s", params.interpolate_path ? "true" : "false");
+    // SMPL_INFO_NAMED(PI_LOGGER, "  Shortcut Path: %s", params.shortcut_path ? "true" : "false");
+    // SMPL_INFO_NAMED(PI_LOGGER, "  Shortcut Type: %s", to_string(params.shortcut_type).c_str());
+    // SMPL_INFO_NAMED(PI_LOGGER, "  Interpolate Path: %s", params.interpolate_path ? "true" : "false");
 
     if (!m_robot) {
         SMPL_ERROR("Robot Model given to Arm Planner Interface must be non-null");
@@ -320,7 +320,7 @@ bool PlannerInterface::init(const PlanningParams& params)
 
     m_initialized = true;
 
-    SMPL_INFO_NAMED(PI_LOGGER, "Initialized planner interface");
+    // SMPL_INFO_NAMED(PI_LOGGER, "Initialized planner interface");
     return m_initialized;
 }
 
@@ -368,7 +368,7 @@ void ConvertJointVariablePathToJointTrajectory(
     const std::string& multi_dof_joint_state_frame,
     moveit_msgs::RobotTrajectory& traj)
 {
-    SMPL_INFO("Convert Variable Path to Robot Trajectory");
+    // SMPL_INFO("Convert Variable Path to Robot Trajectory");
 
     traj.joint_trajectory.header.frame_id = joint_state_frame;
     traj.multi_dof_joint_trajectory.header.frame_id = multi_dof_joint_state_frame;
@@ -396,9 +396,9 @@ void ConvertJointVariablePathToJointTrajectory(
         }
     }
 
-    SMPL_INFO("  Path includes %zu single-dof joints and %zu multi-dof joints",
-            traj.joint_trajectory.joint_names.size(),
-            traj.multi_dof_joint_trajectory.joint_names.size());
+    // SMPL_INFO("  Path includes %zu single-dof joints and %zu multi-dof joints",
+    //         traj.joint_trajectory.joint_names.size(),
+    //         traj.multi_dof_joint_trajectory.joint_names.size());
 
     // empty or number of points in the path
     if (!traj.joint_trajectory.joint_names.empty()) {
@@ -770,7 +770,7 @@ bool PlannerInterface::solve(
     }
 
     res.trajectory_start = planning_scene.robot_state;
-    SMPL_INFO_NAMED(PI_LOGGER, "Allowed Time (s): %0.3f", req.allowed_planning_time);
+    // SMPL_INFO_NAMED(PI_LOGGER, "Allowed Time (s): %0.3f", req.allowed_planning_time);
 
     auto then = clock::now();
 
@@ -849,7 +849,7 @@ bool ExtractJointStateGoal(
 {
     auto& goal_constraints = v_goal_constraints.front();
 
-    SMPL_INFO_NAMED(PI_LOGGER, "Set goal configuration");
+    // SMPL_INFO_NAMED(PI_LOGGER, "Set goal configuration");
 
     RobotState sbpl_angle_goal(model->jointVariableCount(), 0);
     RobotState sbpl_angle_tolerance(model->jointVariableCount(), angles::to_radians(3.0));
@@ -880,7 +880,7 @@ bool ExtractJointStateGoal(
             sbpl_angle_goal[i] = jit->position;
             sbpl_angle_tolerance[i] = std::min(
                     std::fabs(jit->tolerance_above), std::fabs(jit->tolerance_below));
-            SMPL_INFO_NAMED(PI_LOGGER, "Joint %zu [%s]: goal position: %.3f, goal tolerance: %.3f", i, variable_name.c_str(), sbpl_angle_goal[i], sbpl_angle_tolerance[i]);
+            // SMPL_INFO_NAMED(PI_LOGGER, "Joint %zu [%s]: goal position: %.3f, goal tolerance: %.3f", i, variable_name.c_str(), sbpl_angle_goal[i], sbpl_angle_tolerance[i]);
         }
     }
 
@@ -999,7 +999,7 @@ bool ExtractPoseGoal(
     assert(!v_goal_constraints.empty());
     auto& goal_constraints = v_goal_constraints.front();
 
-    SMPL_INFO_NAMED(PI_LOGGER, "Setting goal position");
+    // SMPL_INFO_NAMED(PI_LOGGER, "Setting goal position");
 
     Eigen::Affine3d goal_pose;
     if (!ExtractGoalPoseFromGoalConstraints(goal_constraints, goal_pose)) {
@@ -1071,19 +1071,19 @@ bool PlannerInterface::setGoal(const GoalConstraints& v_goal_constraints)
     GoalConstraint goal;
 
     if (IsPoseGoal(v_goal_constraints)) {
-        SMPL_INFO_NAMED(PI_LOGGER, "Planning to pose!");
+        // SMPL_INFO_NAMED(PI_LOGGER, "Planning to pose!");
         if (!ExtractPoseGoal(v_goal_constraints, goal)) {
             SMPL_ERROR("Failed to set goal position");
             return false;
         }
 
-        SMPL_INFO_NAMED(PI_LOGGER, "New Goal");
+        // SMPL_INFO_NAMED(PI_LOGGER, "New Goal");
         double yaw, pitch, roll;
         angles::get_euler_zyx(goal.pose.rotation(), yaw, pitch, roll);
-        SMPL_INFO_NAMED(PI_LOGGER, "    pose: (x: %0.3f, y: %0.3f, z: %0.3f, Y: %0.3f, P: %0.3f, R: %0.3f)", goal.pose.translation()[0], goal.pose.translation()[1], goal.pose.translation()[2], yaw, pitch, roll);
-        SMPL_INFO_NAMED(PI_LOGGER, "    tolerance: (dx: %0.3f, dy: %0.3f, dz: %0.3f, dR: %0.3f, dP: %0.3f, dY: %0.3f)", goal.xyz_tolerance[0], goal.xyz_tolerance[1], goal.xyz_tolerance[2], goal.rpy_tolerance[0], goal.rpy_tolerance[1], goal.rpy_tolerance[2]);
+        // SMPL_INFO_NAMED(PI_LOGGER, "    pose: (x: %0.3f, y: %0.3f, z: %0.3f, Y: %0.3f, P: %0.3f, R: %0.3f)", goal.pose.translation()[0], goal.pose.translation()[1], goal.pose.translation()[2], yaw, pitch, roll);
+        // SMPL_INFO_NAMED(PI_LOGGER, "    tolerance: (dx: %0.3f, dy: %0.3f, dz: %0.3f, dR: %0.3f, dP: %0.3f, dY: %0.3f)", goal.xyz_tolerance[0], goal.xyz_tolerance[1], goal.xyz_tolerance[2], goal.rpy_tolerance[0], goal.rpy_tolerance[1], goal.rpy_tolerance[2]);
     } else if (IsJointStateGoal(v_goal_constraints)) {
-        SMPL_INFO_NAMED(PI_LOGGER, "Planning to joint configuration!");
+        // SMPL_INFO_NAMED(PI_LOGGER, "Planning to joint configuration!");
         if (!ExtractJointStateGoal(m_robot, v_goal_constraints, goal)) {
             SMPL_ERROR("Failed to set goal configuration");
             return false;
@@ -1138,7 +1138,7 @@ bool PlannerInterface::setGoal(const GoalConstraints& v_goal_constraints)
 // state in the graph, heuristic, and search.
 bool PlannerInterface::setStart(const moveit_msgs::RobotState& state)
 {
-    SMPL_INFO_NAMED(PI_LOGGER, "set start configuration");
+    // SMPL_INFO_NAMED(PI_LOGGER, "set start configuration");
 
     // TODO: Ideally, the RobotModel should specify joints rather than variables
     if (!state.multi_dof_joint_state.joint_names.empty()) {
@@ -1182,7 +1182,7 @@ bool PlannerInterface::setStart(const moveit_msgs::RobotState& state)
 //        return false;
     }
 
-    SMPL_INFO_STREAM_NAMED(PI_LOGGER, "  joint variables: " << initial_positions);
+    // SMPL_INFO_STREAM_NAMED(PI_LOGGER, "  joint variables: " << initial_positions);
 
     if (!m_pspace->setStart(initial_positions)) {
         SMPL_ERROR("Failed to set start state");
@@ -1215,7 +1215,7 @@ bool PlannerInterface::plan(double allowed_time, std::vector<RobotState>& path)
     SV_SHOW_DEBUG_NAMED("bfs_walls", getBfsWallsVisualization());
     SV_SHOW_DEBUG_NAMED("bfs_values", getBfsValuesVisualization());
 
-    SMPL_WARN_NAMED(PI_LOGGER, "Planning!!!!!");
+    // SMPL_WARN_NAMED(PI_LOGGER, "Planning!!!!!");
     bool b_ret = false;
     std::vector<int> solution_state_ids;
 
@@ -1233,15 +1233,15 @@ bool PlannerInterface::plan(double allowed_time, std::vector<RobotState>& path)
 
     // if a path is returned, then pack it into msg form
     if (b_ret && (solution_state_ids.size() > 0)) {
-        SMPL_INFO_NAMED(PI_LOGGER, "Planning succeeded");
-        SMPL_INFO_NAMED(PI_LOGGER, "  Num Expansions (Initial): %d", m_planner->get_n_expands_init_solution());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Num Expansions (Final): %d", m_planner->get_n_expands());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Epsilon (Initial): %0.3f", m_planner->get_initial_eps());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Epsilon (Final): %0.3f", m_planner->get_solution_eps());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Time (Initial): %0.3f", m_planner->get_initial_eps_planning_time());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Time (Final): %0.3f", m_planner->get_final_eps_planning_time());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Path Length (states): %zu", solution_state_ids.size());
-        SMPL_INFO_NAMED(PI_LOGGER, "  Solution Cost: %d", m_sol_cost);
+        // SMPL_INFO_NAMED(PI_LOGGER, "Planning succeeded");
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Num Expansions (Initial): %d", m_planner->get_n_expands_init_solution());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Num Expansions (Final): %d", m_planner->get_n_expands());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Epsilon (Initial): %0.3f", m_planner->get_initial_eps());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Epsilon (Final): %0.3f", m_planner->get_solution_eps());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Time (Initial): %0.3f", m_planner->get_initial_eps_planning_time());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Time (Final): %0.3f", m_planner->get_final_eps_planning_time());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Path Length (states): %zu", solution_state_ids.size());
+        // SMPL_INFO_NAMED(PI_LOGGER, "  Solution Cost: %d", m_sol_cost);
 
         path.clear();
         if (!m_pspace->extractPath(solution_state_ids, path)) {
@@ -1400,7 +1400,7 @@ bool PlannerInterface::parsePlannerID(
 
     boost::smatch sm;
 
-    SMPL_INFO("Match planner id '%s' against regex '%s'", planner_id.c_str(), alg_regex.str().c_str());
+    // SMPL_INFO("Match planner id '%s' against regex '%s'", planner_id.c_str(), alg_regex.str().c_str());
     if (!boost::regex_match(planner_id, sm, alg_regex)) {
         return false;
     }
@@ -1438,7 +1438,7 @@ bool PlannerInterface::reinitPlanner(const std::string& planner_id)
         return true;
     }
 
-    SMPL_INFO_NAMED(PI_LOGGER, "Initialize planner");
+    // SMPL_INFO_NAMED(PI_LOGGER, "Initialize planner");
 
     std::string search_name;
     std::string heuristic_name;
@@ -1448,9 +1448,9 @@ bool PlannerInterface::reinitPlanner(const std::string& planner_id)
         return false;
     }
 
-    SMPL_INFO_NAMED(PI_LOGGER, " -> Planning Space: %s", space_name.c_str());
-    SMPL_INFO_NAMED(PI_LOGGER, " -> Heuristic: %s", heuristic_name.c_str());
-    SMPL_INFO_NAMED(PI_LOGGER, " -> Search: %s", search_name.c_str());
+    // SMPL_INFO_NAMED(PI_LOGGER, " -> Planning Space: %s", space_name.c_str());
+    // SMPL_INFO_NAMED(PI_LOGGER, " -> Heuristic: %s", heuristic_name.c_str());
+    // SMPL_INFO_NAMED(PI_LOGGER, " -> Search: %s", search_name.c_str());
 
     auto psait = m_space_factories.find(space_name);
     if (psait == end(m_space_factories)) {

@@ -61,7 +61,7 @@ bool EuclidDistHeuristic::init(RobotPlanningSpace* space)
 
     m_point_ext = space->getExtension<PointProjectionExtension>();
     if (m_point_ext) {
-        SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
+        // SMPL_INFO_NAMED(LOG, "Got Point Projection Extension!");
     }
     m_pose_ext = space->getExtension<PoseProjectionExtension>();
     if (m_pose_ext) {

@@ -1089,9 +1089,9 @@ bool ManipLattice::setGoalConfiguration(const GoalConstraint& goal)
     auto vis_name = "target_config";
     SV_SHOW_INFO_NAMED(vis_name, getStateVisualization(goal.angles, vis_name));
 
-    SMPL_INFO_NAMED(G_LOG, "A new goal has been set");
-    SMPL_INFO_STREAM_NAMED(G_LOG, "  config: " << goal.angles);
-    SMPL_INFO_STREAM_NAMED(G_LOG, "  tolerance: " << goal.angle_tolerances);
+    // SMPL_INFO_NAMED(G_LOG, "A new goal has been set");
+    // SMPL_INFO_STREAM_NAMED(G_LOG, "  config: " << goal.angles);
+    // SMPL_INFO_STREAM_NAMED(G_LOG, "  tolerance: " << goal.angle_tolerances);
 
     // notify observers of updated goal
     return RobotPlanningSpace::setGoal(goal);
