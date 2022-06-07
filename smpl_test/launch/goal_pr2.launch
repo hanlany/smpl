@@ -4,7 +4,7 @@
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find pr2_description)/robots/pr2.urdf.xacro'"/>
 
     <arg unless="$(arg debug)" name="launch-prefix" value=""/>
-    <arg     if="$(arg debug)" name="launch-prefix" value="gdb ex --args"/>
+    <arg     if="$(arg debug)" name="launch-prefix" value="xterm -e gdb --args"/>
 
     <node pkg="smpl_test" type="callPlanner" name="call_planner"
             launch-prefix="$(arg launch-prefix)">
