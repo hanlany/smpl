@@ -22,6 +22,7 @@
 #include <smpl/search/adaptive_planner.h>
 #include <smpl/search/arastar.h>
 #include <smpl/search/awastar.h>
+#include <smpl/search/epase.h>
 #include <smpl/search/experience_graph_planner.h>
 #include <smpl/stl/memory.h>
 
@@ -768,6 +769,30 @@ auto MakePADAStar(
     tparams.tracking.max_allowed_time = clock::duration::zero();
 
     search->set_time_parameters(tparams);
+
+    return std::move(search);
+}
+
+auto MakeEPASE(
+    RobotPlanningSpace* space,
+    RobotHeuristic* heuristic,
+    const PlanningParams& params)
+    -> std::unique_ptr<SBPLPlanner>
+{
+    auto search = make_unique<EPASE>(space, heuristic);
+
+    double epsilon;
+    params.param("epsilon", epsilon, 1.0);
+    search->set_initialsolution_eps(epsilon);
+
+    bool search_mode;
+    params.param("search_mode", search_mode, false);
+    search->set_search_mode(search_mode);
+
+    bool allow_partial_solutions;
+    if (params.getParam("allow_partial_solutions", allow_partial_solutions)) {
+        search->allowPartialSolutions(allow_partial_solutions);
+    }
 
     return std::move(search);
 }

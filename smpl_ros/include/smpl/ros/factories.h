@@ -137,6 +137,12 @@ auto MakePADAStar(
     const PlanningParams& params)
     -> std::unique_ptr<SBPLPlanner>;
 
+auto MakeEPASE(
+    RobotPlanningSpace* space,
+    RobotHeuristic* heuristic,
+    const PlanningParams& params)
+    -> std::unique_ptr<SBPLPlanner>;
+
 } // namespace smpl
 
 #endif
