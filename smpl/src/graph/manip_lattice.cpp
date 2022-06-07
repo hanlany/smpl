@@ -281,6 +281,16 @@ void ManipLattice::GetSuccs(
     }
 }
 
+void ManipLattice::GetSucc(
+    int state_id,
+    int action_idx,
+    int* succ,
+    int* cost,
+    int thread_id)
+{
+
+}
+
 Stopwatch GetLazySuccsStopwatch("GetLazySuccs", 10);
 
 void ManipLattice::GetLazySuccs(
