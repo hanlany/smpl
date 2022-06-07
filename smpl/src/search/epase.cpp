@@ -35,6 +35,7 @@
 
 // system includes
 #include <sbpl/utils/key.h>
+#include <boost/functional/hash.hpp>
 
 // project includes
 #include <smpl/time.h>
@@ -608,7 +609,7 @@ int EPASE::improvePath(
         }
 
         // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
-        if (min_edge_ptr->child_state_ptr == NULL)
+        if (min_edge_ptr->action_idx == -1)
         {
             min_edge_ptr->parent_state_ptr->is_visited = true;
             min_edge_ptr->parent_state_ptr->being_expanded = true;
@@ -624,7 +625,7 @@ int EPASE::improvePath(
 
         if (m_num_threads == 1)
         {
-            // expandEdge(min__edge_ptr, 0);
+            expandEdge(min_edge_ptr, 0);
         }
         else
         {
@@ -666,43 +667,7 @@ int EPASE::improvePath(
     return EXHAUSTED_OPEN_LIST;
 }
 
-// Expand a state, updating its successors and placing them into OPEN, CLOSED,
-// and INCONS list appropriately.
-void EPASE::expand(SearchState* s)
-{
-    m_succs.clear();
-    m_costs.clear();
-    m_space->GetSuccs(s->state_id, &m_succs, &m_costs);
-
-    SMPL_DEBUG_NAMED(SELOG, "  %zu successors", m_succs.size());
-
-    for (size_t sidx = 0; sidx < m_succs.size(); ++sidx) {
-        int succ_state_id = m_succs[sidx];
-        int cost = m_costs[sidx];
-
-        SearchState* succ_state = getSearchState(succ_state_id);
-        reinitSearchState(succ_state);
-
-        int new_cost = s->eg + cost;
-        SMPL_DEBUG_NAMED(SELOG, "Compare new cost %d vs old cost %d", new_cost, succ_state->g);
-        if (new_cost < succ_state->g) {
-            succ_state->g = new_cost;
-            succ_state->bp = s;
-            if (succ_state->iteration_closed != m_iteration) {
-                succ_state->f = computeKey(succ_state);
-                if (m_open.contains(succ_state)) {
-                    m_open.decrease(succ_state);
-                } else {
-                    m_open.push(succ_state);
-                }
-            } else if (!succ_state->incons) {
-                m_incons.push_back(succ_state);
-            }
-        }
-    }
-}
-
-void EPASE::expandEdge(EdgePtrType edge_ptr)
+void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 {
     m_lock.lock();
 
@@ -711,13 +676,12 @@ void EPASE::expandEdge(EdgePtrType edge_ptr)
     auto state_ptr = edge_ptr->parent_state_ptr;
     
     // Proxy edge, add the real edges to Eopen
-    if (edge_ptr->child_state_ptr == NULL)
+    if (edge_ptr->action_idx == -1)
     {       
-
-
         m_succs.clear();
         m_costs.clear();
-        m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, &m_succs, &m_costs);
+        vector<bool> true_costs;
+        m_space->GetLazySuccs(edge_ptr->parent_state_ptr->state_id, &m_succs, &m_costs, &true_costs);
 
         for (size_t sidx = 0; sidx < m_succs.size(); ++sidx) 
         {
@@ -728,119 +692,99 @@ void EPASE::expandEdge(EdgePtrType edge_ptr)
             reinitSearchState(succ_state_ptr);
 
             auto edge_ptr_real = new Edge();
+            edge_ptr_real->action_idx = sidx;
             edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
             edge_ptr_real->child_state_ptr = succ_state_ptr;
             edge_ptr_real->exp_priority = edge_ptr->exp_priority;
-            m_edge_map.insert(make_pair(getEdgeKey(edge_ptr_real), edge_ptr_real));
+            edge_ptr->edge_id = getEdgeKey(edge_ptr_real);
+            m_edge_map.insert(make_pair(edge_ptr->edge_id, edge_ptr_real));
 
             // if (VERBOSE)
             //     cout << "Pushing successor with g_val: " << state_ptr->GetGValue() << " | h_val: " << state_ptr->GetHValue() << endl;
            
-            // state_ptr->num_successors_+=1;
+            state_ptr->num_successors+=1;
             m_edge_open.push(edge_ptr_real);
         }
 
-        // num_proxy_expansions_++;
+        // num_proxy_expansions_++; 
         m_recheck_flag = true;
     }
     else // Real edge, evaluate and add proxy edges for child 
     {        
         
-        // auto action_ptr = edge_ptr->action_ptr_;
+        auto action_idx = edge_ptr->action_idx;
 
-        // m_lock.unlock();
-        // // Evaluate the edge
-        // auto t_start = chrono::steady_clock::now();
-        // auto action_successor = action_ptr->GetSuccessor(state_ptr->GetStateVars(), thread_id);
-        // auto t_end = chrono::steady_clock::now();
-        // //********************
-        // m_lock.lock();
+        int succ_state_id, cost;
+
+        m_lock.unlock();
+        // Evaluate the edge
+        auto t_start = clock::now();
+        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+        auto t_end = clock::now();
+        //********************
+        m_lock.lock();
         // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
 
-        // if (action_successor.success_)
-        // {
-        //     auto successor_state_ptr = constructState(action_successor.successor_state_vars_costs_.back().first);
-        //     double cost = action_successor.successor_state_vars_costs_.back().second;                
+        SearchState* succ_state = getSearchState(succ_state_id);
+        reinitSearchState(succ_state);
 
-        //     // Set successor and cost in expanded edge
-        //     edge_ptr->child_state_ptr_ = successor_state_ptr;
-        //     edge_ptr->SetCost(cost);
-
-        //     if (!successor_state_ptr->IsVisited())
-        //     {
-        //         double new_g_val = edge_ptr->parent_state_ptr_->GetGValue() + cost;
-                
-        //         if (successor_state_ptr->GetGValue() > new_g_val)
-        //         {
-
-        //             double h_val = successor_state_ptr->GetHValue();
-                    
-        //             if (h_val == -1)
-        //             {
-        //                 h_val = computeHeuristic(successor_state_ptr);
-        //                 successor_state_ptr->SetHValue(h_val);        
-        //             }
-
-        //             if (h_val != DINF)
-        //             {
-        //                 h_val_min_ = h_val < h_val_min_ ? h_val : h_val_min_;
-        //                 successor_state_ptr->SetGValue(new_g_val);
-        //                 successor_state_ptr->SetFValue(new_g_val + heuristic_w_*h_val);
-        //                 successor_state_ptr->SetIncomingEdgePtr(edge_ptr);
-                        
-        //                 // Insert poxy edge
-        //                 auto edge_temp = Edge(successor_state_ptr, dummy_action_ptr_);
-        //                 auto edge_key = getEdgeKey(&edge_temp);
-        //                 auto it_edge = m_edge_map.find(edge_key); 
-        //                 EdgePtrType proxy_edge_ptr;
-
-        //                 if (it_edge == m_edge_map.end())
-        //                 {
-        //                     proxy_edge_ptr = new Edge(successor_state_ptr, dummy_action_ptr_);
-        //                     m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
-        //                 }
-        //                 else
-        //                 {
-        //                     proxy_edge_ptr = it_edge->second;
-        //                 }
-
-        //                 proxy_edge_ptr->expansion_priority_ = new_g_val + heuristic_w_*h_val;
-                        
-        //                 if (edge_open_list_.contains(proxy_edge_ptr))
-        //                 {
-        //                     edge_open_list_.decrease(proxy_edge_ptr);
-        //                 }
-        //                 else
-        //                 {
-        //                     edge_open_list_.push(proxy_edge_ptr);
-        //                 }
-
-        //             }
-
-        //         }       
-        //     }
-        // }
-        // else
-        //     if (VERBOSE)
-        //         edge_ptr->Print("No successors for");
-
+        edge_ptr->child_state_ptr = succ_state;
+        edge_ptr->cost = cost;
         
 
-        // edge_ptr->parent_state_ptr_->num_expanded_successors_ += 1;
+        int new_cost = edge_ptr->parent_state_ptr->eg + cost;
+        if (new_cost < succ_state->g) 
+        {
+            succ_state->g = new_cost;
+            succ_state->bp = edge_ptr->parent_state_ptr;
+            if (succ_state->iteration_closed != m_iteration) 
+            {
+                succ_state->f = computeKey(succ_state);
 
-        // if (edge_ptr->parent_state_ptr_->num_expanded_successors_ == edge_ptr->parent_state_ptr_->num_successors_)
-        // {
-        //     edge_ptr->parent_state_ptr_->UnsetBeingExpanded();
-        //     auto it_state_be = find(being_expanded_states_.begin(), being_expanded_states_.end(), edge_ptr->parent_state_ptr_);
-        //     if (it_state_be != being_expanded_states_.end())
-        //         being_expanded_states_.erase(it_state_be);
-        // }
+                // Insert poxy edge
+                auto proxy_edge_ptr = new Edge();
+                proxy_edge_ptr->parent_state_ptr = succ_state;
+                auto edge_key = getEdgeKey(proxy_edge_ptr);
+                auto it_edge = m_edge_map.find(edge_key); 
 
-        // if (edge_ptr->parent_state_ptr_->num_expanded_successors_ > edge_ptr->parent_state_ptr_->num_successors_)
-        // {
-        //     edge_ptr->parent_state_ptr_->Print();
-        //     throw runtime_error("Number of expanded edges cannot be greater than number of successors");
-        // }
+                if (it_edge == m_edge_map.end())
+                {
+                    m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
+                }
+                else
+                {
+                    delete proxy_edge_ptr;
+                    proxy_edge_ptr = it_edge->second;
+                }
+
+                proxy_edge_ptr->exp_priority = succ_state->f;
+                
+                if (m_edge_open.contains(proxy_edge_ptr))
+                {
+                    m_edge_open.decrease(proxy_edge_ptr);
+                }
+                else
+                {
+                    m_edge_open.push(proxy_edge_ptr);
+                }
+            } 
+        }
+
+        edge_ptr->parent_state_ptr->num_expanded_successors += 1;
+
+        if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
+        {
+            edge_ptr->parent_state_ptr->being_expanded = false;
+            auto it_state_be = find(m_being_expanded_states.begin(), m_being_expanded_states.end(), edge_ptr->parent_state_ptr);
+            if (it_state_be != m_being_expanded_states.end())
+                m_being_expanded_states.erase(it_state_be);
+        }
+
+        if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
+        {
+            // edge_ptr->parent_state_ptr->Print();
+            throw runtime_error("Number of expanded edges cannot be greater than number of successors");
+        }
 
 
         m_recheck_flag = true;
@@ -866,7 +810,9 @@ int EPASE::computeKey(SearchState* s) const
 
 int EPASE::getEdgeKey(const EdgePtrType& edge_ptr)
 {
-
+    size_t seed = 0;
+    boost::hash_combine(seed, edge_ptr->parent_state_ptr->state_id);
+    boost::hash_combine(seed, edge_ptr->action_idx);
 }
 
 

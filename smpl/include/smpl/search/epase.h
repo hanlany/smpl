@@ -189,6 +189,9 @@ private:
         bool incons;
         std::atomic<bool> is_visited;
         std::atomic<bool> being_expanded;
+        std::atomic<int> num_successors;
+        std::atomic<int> num_expanded_successors;
+
     };
 
     struct SearchStateCompare
@@ -200,16 +203,17 @@ private:
 
     struct Edge : public heap_element
     {
-        int edge_id;
+        int edge_id = -1;
+        int action_idx = -1;
 
-        SearchState* parent_state_ptr;
-        SearchState* child_state_ptr;
+        SearchState* parent_state_ptr=NULL;
+        SearchState* child_state_ptr=NULL;
 
-        double exp_priority;
+        double exp_priority = -1;
         std::atomic<bool> is_closed;
         std::atomic<bool> is_eval;
         std::atomic<bool> is_invalid; 
-        double cost;
+        double cost = -1;
         mutable std::mutex lock; 
     };
 
@@ -304,8 +308,7 @@ private:
         int& elapsed_expansions,
         clock::duration& elapsed_time);
 
-    void expand(SearchState* s);
-    void expandEdge(EdgePtrType edge_ptr);
+    void expandEdge(EdgePtrType edge_ptr, int thread_id);
 
     void recomputeHeuristics();
     void reorderOpen();
