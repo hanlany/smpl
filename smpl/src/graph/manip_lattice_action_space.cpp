@@ -329,6 +329,23 @@ auto ManipLatticeActionSpace::getStartGoalDistances(const RobotState& state)
 
 bool ManipLatticeActionSpace::apply(
     const RobotState& parent,
+    std::vector<Action>& actions,
+    int action_idx)
+{
+    double goal_dist, start_dist;
+    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent);
+
+    (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
+
+    if (actions.empty()) {
+        SMPL_WARN_ONCE("No motion primitives specified");
+    }
+
+    return true;
+}
+
+bool ManipLatticeActionSpace::apply(
+    const RobotState& parent,
     std::vector<Action>& actions)
 {
     double goal_dist, start_dist;

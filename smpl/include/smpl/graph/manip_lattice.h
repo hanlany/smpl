@@ -163,8 +163,8 @@ public:
     void GetSucc(
         int state_id,
         int action_idx,
-        int* succ,
-        int* cost,
+        std::vector<int>* succs,
+        std::vector<int>* costs,
         int thread_id) override;    
     void PrintState(int state_id, bool verbose, FILE* fout = nullptr) override;
     void GetPreds(

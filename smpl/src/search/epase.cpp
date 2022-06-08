@@ -717,7 +717,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         
         auto action_idx = edge_ptr->action_idx;
 
-        int succ_state_id, cost;
+        vector<int> succ_state_id, cost;
 
         m_lock.unlock();
         // Evaluate the edge
@@ -728,14 +728,14 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         m_lock.lock();
         // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
 
-        SearchState* succ_state = getSearchState(succ_state_id);
+        SearchState* succ_state = getSearchState(succ_state_id[0]);
         reinitSearchState(succ_state);
 
         edge_ptr->child_state_ptr = succ_state;
-        edge_ptr->cost = cost;
+        edge_ptr->cost = cost[0];
         
 
-        int new_cost = edge_ptr->parent_state_ptr->eg + cost;
+        int new_cost = edge_ptr->parent_state_ptr->eg + cost[0];
         if (new_cost < succ_state->g) 
         {
             succ_state->g = new_cost;
