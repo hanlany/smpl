@@ -281,6 +281,11 @@ void ManipLattice::GetSuccs(
     }
 }
 
+void ManipLattice::GetNumSuccs(int state_id, int& num_succs)
+{
+    m_actions->getNumSuccs(num_succs);
+}
+
 void ManipLattice::GetSucc(
     int state_id,
     int action_idx,

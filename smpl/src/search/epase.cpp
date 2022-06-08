@@ -678,23 +678,26 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     // Proxy edge, add the real edges to Eopen
     if (edge_ptr->action_idx == -1)
     {       
-        m_succs.clear();
-        m_costs.clear();
-        vector<bool> true_costs;
-        m_space->GetLazySuccs(edge_ptr->parent_state_ptr->state_id, &m_succs, &m_costs, &true_costs);
+        // m_succs.clear();
+        // m_costs.clear();
+        // vector<bool> true_costs;
+        // m_space->GetLazySuccs(edge_ptr->parent_state_ptr->state_id, &m_succs, &m_costs, &true_costs);
+        // m_space->GetLazySuccs(edge_ptr->parent_state_ptr->state_id, &m_succs, &m_costs, &true_costs);
+        int num_succs;
+        m_space->GetNumSuccs(edge_ptr->parent_state_ptr->state_id, num_succs);
 
         for (size_t sidx = 0; sidx < m_succs.size(); ++sidx) 
         {
-            int succ_state_id = m_succs[sidx];
-            int cost = m_costs[sidx];
+            // int succ_state_id = m_succs[sidx];
+            // int cost = m_costs[sidx];
 
-            SearchState* succ_state_ptr = getSearchState(succ_state_id);
-            reinitSearchState(succ_state_ptr);
+            // SearchState* succ_state_ptr = getSearchState(succ_state_id);
+            // reinitSearchState(succ_state_ptr);
 
             auto edge_ptr_real = new Edge();
             edge_ptr_real->action_idx = sidx;
             edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
-            edge_ptr_real->child_state_ptr = succ_state_ptr;
+            // edge_ptr_real->child_state_ptr = succ_state_ptr;
             edge_ptr_real->exp_priority = edge_ptr->exp_priority;
             edge_ptr->edge_id = getEdgeKey(edge_ptr_real);
             m_edge_map.insert(make_pair(edge_ptr->edge_id, edge_ptr_real));
