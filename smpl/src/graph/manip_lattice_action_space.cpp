@@ -344,6 +344,10 @@ bool ManipLatticeActionSpace::apply(
 
     return true;
 }
+void ManipLatticeActionSpace::getNumSuccs(int& num_succs)
+{
+    num_succs = m_mprims.size();
+}
 
 bool ManipLatticeActionSpace::getAction(
     const RobotState& parent,

@@ -93,6 +93,8 @@ public:
     bool apply(const RobotState& parent, std::vector<Action>& actions) override;
     ///@}
 
+    void getNumSuccs(int& num_succs) override;
+
 protected:
 
     std::vector<MotionPrimitive> m_mprims;

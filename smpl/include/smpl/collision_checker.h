@@ -59,6 +59,7 @@ public:
     /// \param[out] dist The distance to the nearest obstacle
     /// \return Whether the state is valid
     virtual bool isStateValid(const RobotState& state, bool verbose = false) = 0;
+    virtual bool isStateValid(int thread_idx, const RobotState& state, bool verbose = false){};
 
     /// \brief Return whether the interpolated path between two points is valid.
     ///
@@ -75,6 +76,11 @@ public:
         const RobotState& start,
         const RobotState& finish,
         bool verbose = false) = 0;
+    virtual bool isStateToStateValid(
+        int thread_idx,
+        const RobotState& start,
+        const RobotState& finish,
+        bool verbose = false){};
 
     /// \brief Return a linearly interpolated path between two joint states.
     ///
