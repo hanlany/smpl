@@ -29,9 +29,8 @@
 
 /// \author Benjamin Cohen
 /// \author Andrew Dornbush
-/// \author Shohin Mukherjee
 
-#include <sbpl_collision_checking/collision_space_multithread.hpp>
+#include <sbpl_collision_checking/collision_space_multithread.h>
 
 // standard includes
 #include <assert.h>

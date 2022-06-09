@@ -172,6 +172,7 @@ public:
     double get_final_epsilon() override;
     void get_search_stats(std::vector<PlannerStats>* s) override;
     void set_initialsolution_eps(double eps) override;
+    void set_num_threads(int num_threads);
     ///@}
 
 private:

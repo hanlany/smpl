@@ -366,6 +366,12 @@ void EPASE::set_initialsolution_eps(double eps)
     m_initial_eps = eps;
 }
 
+/// Set the number of threads epase can use
+void EPASE::set_num_threads(int num_threads)
+{
+    m_num_threads = num_threads;
+}
+
 /// Set the goal state.
 int EPASE::set_goal(int goal_state_id)
 {

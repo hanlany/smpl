@@ -10,7 +10,7 @@
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <octomap_msgs/OctomapWithPose.h>
 
-#include <sym_plan/collision_space_multithread.hpp>
+#include <sbpl_collision_checking/collision_space_multithread.h>
 #include <sbpl_collision_checking/shapes.h>
 
 class CollisionSpaceSceneMultithread
@@ -21,7 +21,7 @@ public:
 
     bool SetRobotState(int thread_idx, const moveit_msgs::RobotState& robot_state);
 
-    // bool ProcessCollisionObjectMsg(const moveit_msgs::CollisionObject& object);
+    bool ProcessCollisionObjectMsg(int thread_idx, const moveit_msgs::CollisionObject& object);
     bool AddCollisionObjectMsg(int thread_idx, const moveit_msgs::CollisionObject& object);
     // bool RemoveCollisionObjectMsg(const moveit_msgs::CollisionObject& object);
     // bool AppendCollisionObjectMsg(const moveit_msgs::CollisionObject& object);
