@@ -283,7 +283,7 @@ PlannerInterface::PlannerInterface(
     m_planner_factories["larastar"] = MakeLARAStar;
     m_planner_factories["egwastar"] = MakeEGWAStar;
     m_planner_factories["padastar"] = MakePADAStar;
-    m_planner_factories["padastar"] = MakeEPASE;
+    m_planner_factories["epase"] = MakeEPASE;
 }
 
 PlannerInterface::~PlannerInterface()

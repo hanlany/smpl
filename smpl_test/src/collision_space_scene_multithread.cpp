@@ -5,7 +5,7 @@
 #include <octomap_msgs/conversions.h>
 #include <smpl/stl/memory.h>
 
-#include <sym_plan/collision_space_scene_multithread.hpp>
+#include "collision_space_scene_multithread.h"
 
 static const char* LOG = "collision_space_scene";
 
@@ -153,23 +153,25 @@ bool CollisionSpaceSceneMultithread::SetRobotState(
 /// \brief Process a collision object
 /// \param object The collision object to be processed
 /// \return true if the object was processed successfully; false otherwise
-// bool CollisionSpaceSceneMultithread::ProcessCollisionObjectMsg(
-//     const moveit_msgs::CollisionObject& object)
-// {
-//     if (object.operation == moveit_msgs::CollisionObject::ADD) {
-//         return AddCollisionObjectMsg(object);
-//     } else if (object.operation == moveit_msgs::CollisionObject::REMOVE) {
-//         return RemoveCollisionObjectMsg(object);
-//     } else if (object.operation == moveit_msgs::CollisionObject::APPEND) {
-//         return AppendCollisionObjectMsg(object);
-//     } else if (object.operation == moveit_msgs::CollisionObject::MOVE) {
-//       return RemoveCollisionObjectMsg(object) && AddCollisionObjectMsg(object);
-//         // return MoveCollisionObjectMsg(object);
-//     } else {
-//         ROS_WARN_NAMED(LOG, "Collision object operation '%d' is not supported", object.operation);
-//         return false;
-//     }
-// }
+bool CollisionSpaceSceneMultithread::ProcessCollisionObjectMsg(
+    int thread_idx,
+    const moveit_msgs::CollisionObject& object)
+{
+    if (object.operation == moveit_msgs::CollisionObject::ADD) 
+        return AddCollisionObjectMsg(thread_idx, object);
+    // else if (object.operation == moveit_msgs::CollisionObject::REMOVE) 
+    //     return RemoveCollisionObjectMsg(object);
+    // else if (object.operation == moveit_msgs::CollisionObject::APPEND)
+    //     return AppendCollisionObjectMsg(object);
+    // else if (object.operation == moveit_msgs::CollisionObject::MOVE)
+    //   return RemoveCollisionObjectMsg(object) && AddCollisionObjectMsg(object);
+    //     // return MoveCollisionObjectMsg(object);
+    else 
+    {
+        ROS_WARN_NAMED(LOG, "Collision object operation '%d' is not supported", object.operation);
+        return false;
+    }
+}
 
 bool CollisionSpaceSceneMultithread::AddCollisionObjectMsg(
     int thread_idx,
