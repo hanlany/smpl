@@ -514,6 +514,7 @@ int ARAStar::improvePath(
         min_state->eg = min_state->g;
 
         expand(min_state);
+        std::cout << "Num state expansions: " << elapsed_expansions << std::endl;
 
         ++elapsed_expansions;
     }

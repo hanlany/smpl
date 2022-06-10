@@ -36,6 +36,7 @@
 #include <assert.h>
 #include <unordered_map>
 #include <algorithm>
+#include <iostream>
 #include <functional>
 #include <atomic>
 #include <mutex>
@@ -188,11 +189,18 @@ private:
         unsigned short call_number;
         SearchState* bp;
         bool incons;
-        std::atomic<bool> is_visited;
-        std::atomic<bool> being_expanded;
-        std::atomic<int> num_successors;
-        std::atomic<int> num_expanded_successors;
+        std::atomic<bool> is_visited{false};
+        std::atomic<bool> being_expanded{false};
+        std::atomic<int> num_successors{0};
+        std::atomic<int> num_expanded_successors{0};
 
+        void Print()
+        {
+            std::cout << "id: " << state_id 
+            << " | g: " << g
+            << " | being_expanded: " << being_expanded
+            << std::endl;
+        };
     };
 
     struct SearchStateCompare
@@ -211,11 +219,19 @@ private:
         SearchState* child_state_ptr=NULL;
 
         double exp_priority = -1;
-        std::atomic<bool> is_closed;
-        std::atomic<bool> is_eval;
-        std::atomic<bool> is_invalid; 
+        std::atomic<bool> is_closed{false};
+        std::atomic<bool> is_eval{false};
+        std::atomic<bool> is_invalid{false}; 
         double cost = -1;
         mutable std::mutex lock; 
+    
+        void Print(std::string str = "")
+        {
+            std::cout << str << "id: " << edge_id << " | parent: " << parent_state_ptr->state_id << " | action_idx: " << action_idx;
+            if (child_state_ptr) std::cout << " | child: " << child_state_ptr->state_id;
+            std::cout << std::endl;
+        };
+
     };
 
     struct EdgeCompare
@@ -280,6 +296,7 @@ private:
 
     // Multi-threading members
     int m_num_threads;
+    int m_num_state_expansions;
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::future<void>> m_edge_expansion_futures;
@@ -316,8 +333,8 @@ private:
     int computeKey(SearchState* s) const;
     int getEdgeKey(const EdgePtrType& edge_ptr);
 
-    double computeHeuristic(const StatePtrType& state_ptr){};
-    double computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2){};
+    double computeHeuristic(const StatePtrType& state_ptr);
+    double computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2);
 
     SearchState* getSearchState(int state_id);
     SearchState* createState(int state_id);

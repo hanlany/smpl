@@ -41,7 +41,7 @@
 #include <smpl/time.h>
 #include <smpl/console/console.h>
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 using namespace std;
 
@@ -115,6 +115,7 @@ int EPASE::replan(
     int* cost)
 {
     SMPL_DEBUG_NAMED(SLOG, "Find path to goal");
+    initialize();
 
     if (m_start_state_id < 0) {
         SMPL_ERROR_NAMED(SLOG, "Start state not set");
@@ -156,6 +157,14 @@ int EPASE::replan(
         m_satisfied_eps = std::numeric_limits<double>::infinity();
 
         m_last_start_state_id = m_start_state_id;
+
+        // Insert poxy edge
+        auto proxy_edge_ptr = new Edge();
+        proxy_edge_ptr->parent_state_ptr = start_state;
+        auto edge_key = getEdgeKey(proxy_edge_ptr);
+        m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
+        m_edge_open.push(proxy_edge_ptr);
+
     }
 
     if (m_goal_state_id != m_last_goal_state_id) {
@@ -496,7 +505,8 @@ void EPASE::initialize()
 {
     m_terminate = false;
     m_recheck_flag = true;
-
+    m_num_state_expansions = 0;
+    
     m_edge_expansion_vec.clear();
     m_edge_expansion_vec.resize(m_num_threads-1, NULL);
     
@@ -505,6 +515,9 @@ void EPASE::initialize()
 
     m_edge_expansion_futures.clear();
     m_being_expanded_states.clear();
+
+    vector<LockType> lock_vec(m_num_threads-1);
+    m_lock_vec.swap(lock_vec);
 
 }
 
@@ -517,17 +530,20 @@ int EPASE::improvePath(
     clock::duration& elapsed_time)
 {
 
-
     vector<EdgePtrType> popped_edges;
     m_lock.lock();
 
     while (!m_terminate) 
     {
-        // SearchState* min_state = m_open.min();
-        auto min_edge_ptr = m_edge_open.min();
+        EdgePtrType min_edge_ptr = NULL;
 
         while (!min_edge_ptr && !m_terminate)
         {
+
+            // cout << "eopen size: " << m_edge_open.size() << endl;
+            // cout << "be size: " << m_being_expanded_states.size() << endl;
+            cout << "Num state expansions: " << m_num_state_expansions << endl;
+
             if (m_edge_open.empty() && m_being_expanded_states.empty())
             {
                 m_terminate = true;
@@ -537,11 +553,11 @@ int EPASE::improvePath(
                 m_lock.unlock();
                 exit();
                 return false;
-
             }
 
             while(!min_edge_ptr && !m_edge_open.empty())
             {
+
                 min_edge_ptr = m_edge_open.min();
                 m_edge_open.pop();
                 popped_edges.emplace_back(min_edge_ptr);
@@ -669,7 +685,7 @@ int EPASE::improvePath(
     auto now = clock::now();
     elapsed_time = now - start_time;
     m_lock.unlock();
-    // exit();
+    exit();
     return EXHAUSTED_OPEN_LIST;
 }
 
@@ -684,6 +700,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     // Proxy edge, add the real edges to Eopen
     if (edge_ptr->action_idx == -1)
     {       
+        if (VERBOSE) edge_ptr->Print("Proxy ");
         // m_succs.clear();
         // m_costs.clear();
         // vector<bool> true_costs;
@@ -692,7 +709,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         int num_succs;
         m_space->GetNumSuccs(edge_ptr->parent_state_ptr->state_id, num_succs);
 
-        for (size_t sidx = 0; sidx < m_succs.size(); ++sidx) 
+        for (size_t sidx = 0; sidx < num_succs; ++sidx) 
         {
             // int succ_state_id = m_succs[sidx];
             // int cost = m_costs[sidx];
@@ -708,9 +725,8 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             edge_ptr->edge_id = getEdgeKey(edge_ptr_real);
             m_edge_map.insert(make_pair(edge_ptr->edge_id, edge_ptr_real));
 
-            // if (VERBOSE)
-            //     cout << "Pushing successor with g_val: " << state_ptr->GetGValue() << " | h_val: " << state_ptr->GetHValue() << endl;
-           
+            if (VERBOSE) edge_ptr_real->Print("Inserting real edge into eopen ");
+
             state_ptr->num_successors+=1;
             m_edge_open.push(edge_ptr_real);
         }
@@ -720,7 +736,8 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     }
     else // Real edge, evaluate and add proxy edges for child 
     {        
-        
+        if (VERBOSE) edge_ptr->Print("Real ");
+
         auto action_idx = edge_ptr->action_idx;
 
         vector<int> succ_state_id, cost;
@@ -734,49 +751,56 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         m_lock.lock();
         // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
 
-        SearchState* succ_state = getSearchState(succ_state_id[0]);
-        reinitSearchState(succ_state);
-
-        edge_ptr->child_state_ptr = succ_state;
-        edge_ptr->cost = cost[0];
-        
-
-        int new_cost = edge_ptr->parent_state_ptr->eg + cost[0];
-        if (new_cost < succ_state->g) 
+        if (!succ_state_id.empty())
         {
-            succ_state->g = new_cost;
-            succ_state->bp = edge_ptr->parent_state_ptr;
-            if (succ_state->iteration_closed != m_iteration) 
+            SearchState* succ_state = getSearchState(succ_state_id[0]);
+            reinitSearchState(succ_state);
+
+            edge_ptr->child_state_ptr = succ_state;
+            edge_ptr->cost = cost[0];
+            
+
+            int new_cost = edge_ptr->parent_state_ptr->g + cost[0];
+            if (new_cost < succ_state->g) 
             {
-                succ_state->f = computeKey(succ_state);
+                succ_state->g = new_cost;
+                succ_state->bp = edge_ptr->parent_state_ptr;
+                if (succ_state->iteration_closed != m_iteration) 
+                {
+                    succ_state->f = computeKey(succ_state);
 
-                // Insert poxy edge
-                auto proxy_edge_ptr = new Edge();
-                proxy_edge_ptr->parent_state_ptr = succ_state;
-                auto edge_key = getEdgeKey(proxy_edge_ptr);
-                auto it_edge = m_edge_map.find(edge_key); 
+                    // Insert poxy edge
+                    auto proxy_edge_ptr = new Edge();
+                    proxy_edge_ptr->parent_state_ptr = succ_state;
+                    auto edge_key = getEdgeKey(proxy_edge_ptr);
+                    auto it_edge = m_edge_map.find(edge_key); 
 
-                if (it_edge == m_edge_map.end())
-                {
-                    m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
-                }
-                else
-                {
-                    delete proxy_edge_ptr;
-                    proxy_edge_ptr = it_edge->second;
-                }
+                    if (it_edge == m_edge_map.end())
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("New edge ");
+                        m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
+                    }
+                    else
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("Edge in map ");
+                        delete proxy_edge_ptr;
+                        proxy_edge_ptr = it_edge->second;
+                    }
 
-                proxy_edge_ptr->exp_priority = succ_state->f;
-                
-                if (m_edge_open.contains(proxy_edge_ptr))
-                {
-                    m_edge_open.decrease(proxy_edge_ptr);
-                }
-                else
-                {
-                    m_edge_open.push(proxy_edge_ptr);
-                }
-            } 
+                    proxy_edge_ptr->exp_priority = succ_state->f;
+                    
+                    if (m_edge_open.contains(proxy_edge_ptr))
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("Proxy edge already in eopen ");
+                        m_edge_open.decrease(proxy_edge_ptr);
+                    }
+                    else
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("Inserting proxy edge into eopen ");
+                        m_edge_open.push(proxy_edge_ptr);
+                    }
+                } 
+            }
         }
 
         edge_ptr->parent_state_ptr->num_expanded_successors += 1;
@@ -786,7 +810,10 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             edge_ptr->parent_state_ptr->being_expanded = false;
             auto it_state_be = find(m_being_expanded_states.begin(), m_being_expanded_states.end(), edge_ptr->parent_state_ptr);
             if (it_state_be != m_being_expanded_states.end())
+            {
                 m_being_expanded_states.erase(it_state_be);
+                m_num_state_expansions += 1;
+            }
         }
 
         if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
@@ -795,10 +822,9 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             throw runtime_error("Number of expanded edges cannot be greater than number of successors");
         }
 
-
         m_recheck_flag = true;
 
-    }     
+    }    
 
     m_lock.unlock();
 }
@@ -822,6 +848,17 @@ int EPASE::getEdgeKey(const EdgePtrType& edge_ptr)
     size_t seed = 0;
     boost::hash_combine(seed, edge_ptr->parent_state_ptr->state_id);
     boost::hash_combine(seed, edge_ptr->action_idx);
+    return seed;
+}
+
+double EPASE::computeHeuristic(const StatePtrType& state_ptr)
+{
+    return m_heur->GetGoalHeuristic(state_ptr->state_id);
+}
+
+double EPASE::computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2)
+{
+    return abs(computeHeuristic(state_ptr_1)-computeHeuristic(state_ptr_2));
 }
 
 

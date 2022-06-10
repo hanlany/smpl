@@ -789,6 +789,10 @@ auto MakeEPASE(
     params.param("search_mode", search_mode, false);
     search->set_search_mode(search_mode);
 
+    double num_threads;
+    params.param("num_threads", num_threads, 1.0);
+    search->set_num_threads(num_threads);
+
     bool allow_partial_solutions;
     if (params.getParam("allow_partial_solutions", allow_partial_solutions)) {
         search->allowPartialSolutions(allow_partial_solutions);

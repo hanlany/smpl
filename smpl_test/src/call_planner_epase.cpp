@@ -689,18 +689,18 @@ int main(int argc, char* argv[])
 
     ROS_INFO("Animate path");
 
-    size_t pidx = 0;
-    while (ros::ok()) {
-        auto& point = res.trajectory.joint_trajectory.points[pidx];
-        auto markers = cc.getCollisionRobotVisualization(0, point.positions);
-        for (auto& m : markers.markers) {
-            m.ns = "path_animation";
-        }
-        SV_SHOW_INFO(markers);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        pidx++;
-        pidx %= res.trajectory.joint_trajectory.points.size();
-    }
+    // size_t pidx = 0;
+    // while (ros::ok()) {
+    //     auto& point = res.trajectory.joint_trajectory.points[pidx];
+    //     auto markers = cc.getCollisionRobotVisualization(0, point.positions);
+    //     for (auto& m : markers.markers) {
+    //         m.ns = "path_animation";
+    //     }
+    //     SV_SHOW_INFO(markers);
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    //     pidx++;
+    //     pidx %= res.trajectory.joint_trajectory.points.size();
+    // }
 
     return 0;
 }
