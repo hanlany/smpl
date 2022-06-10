@@ -194,11 +194,13 @@ private:
         std::atomic<int> num_successors{0};
         std::atomic<int> num_expanded_successors{0};
 
-        void Print()
+        void Print(std::string str = "")
         {
-            std::cout << "id: " << state_id 
+            std::cout << str << "id: " << state_id 
             << " | g: " << g
+            << " | is_visited: " << is_visited
             << " | being_expanded: " << being_expanded
+            << " | expanded succs: " << num_expanded_successors << "/" << num_successors
             << std::endl;
         };
     };
@@ -240,7 +242,7 @@ private:
         {
             // Default fifo ordering
             if (e1.exp_priority == e2.exp_priority) // tie breaking
-                return e1.edge_id < e2.edge_id;
+                return e1.parent_state_ptr->state_id < e2.parent_state_ptr->state_id;
             else
                 return e1.exp_priority < e2.exp_priority;
         }
@@ -331,7 +333,7 @@ private:
     void recomputeHeuristics();
     void reorderOpen();
     int computeKey(SearchState* s) const;
-    int getEdgeKey(const EdgePtrType& edge_ptr);
+    size_t getEdgeKey(const EdgePtrType& edge_ptr);
 
     double computeHeuristic(const StatePtrType& state_ptr);
     double computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2);
