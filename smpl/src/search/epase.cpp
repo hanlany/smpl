@@ -27,7 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 ////////////////////////////////////////////////////////////////////////////////
 
-/// \author Andrew Dornbush
+/// \author Shohin Mukherjee
 
 #include <smpl/search/epase.h>
 
@@ -664,8 +664,8 @@ int EPASE::improvePath(
                     int num_threads_current = m_edge_expansion_futures.size();
                     if (thread_id >= num_threads_current)
                     {
-                        if (VERBOSE) cout << "Spawining edge expansion thread " << thread_id << endl;
-                        // m_edge_expansion_futures.emplace_back(async(launch::async, &EpasePlanner::expandEdgeLoop, this, thread_id));
+                        if (VERBOSE) cout << "Spawning edge expansion thread " << thread_id << endl;
+                        m_edge_expansion_futures.emplace_back(async(launch::async, &EPASE::expandEdgeLoop, this, thread_id));
                     }
                     m_lock_vec[thread_id].lock();
                     m_edge_expansion_vec[thread_id] = min_edge_ptr;
@@ -689,6 +689,37 @@ int EPASE::improvePath(
     m_lock.unlock();
     exit();
     return EXHAUSTED_OPEN_LIST;
+}
+
+void EPASE::expandEdgeLoop(int thread_id)
+{
+    while (!m_terminate)
+    {
+
+        m_lock_vec[thread_id].lock();
+        bool status = m_edge_expansion_status[thread_id];
+        m_lock_vec[thread_id].unlock();
+
+        while ((!status) && (!m_terminate))
+        {
+            m_lock_vec[thread_id].lock();
+            status = m_edge_expansion_status[thread_id];
+            m_lock_vec[thread_id].unlock();
+            // cout << "Expansion thread " << thread_id << " waiting! " << m_edge_expansion_status[thread_id] << endl;
+        }
+
+        if (m_terminate)
+            break;
+
+
+        expandEdge(m_edge_expansion_vec[thread_id], thread_id);
+
+        m_lock_vec[thread_id].lock();
+        m_edge_expansion_vec[thread_id] = NULL;
+        m_edge_expansion_status[thread_id] = 0;
+        m_lock_vec[thread_id].unlock();
+
+    }    
 }
 
 void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
