@@ -231,6 +231,7 @@ private:
         {
             std::cout << str << "id: " << edge_id << " | parent: " << parent_state_ptr->state_id << " | action_idx: " << action_idx;
             if (child_state_ptr) std::cout << " | child: " << child_state_ptr->state_id;
+            std::cout << "exp_priority: " << exp_priority;
             std::cout << std::endl;
         };
 
