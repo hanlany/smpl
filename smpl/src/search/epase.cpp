@@ -886,7 +886,7 @@ size_t EPASE::getEdgeKey(const EdgePtrType& edge_ptr)
 
 double EPASE::computeHeuristic(const StatePtrType& state_ptr)
 {
-    return m_heur->GetGoalHeuristic(state_ptr->state_id);
+    return state_ptr->h;
 }
 
 double EPASE::computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2)

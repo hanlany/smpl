@@ -196,6 +196,7 @@ protected:
         bool bState2IsGoal) const;
 
     bool checkAction(const RobotState& state, const Action& action);
+    bool checkAction(const RobotState& state, const Action& action, int thread_id);
 
     bool isGoal(const RobotState& state);
 

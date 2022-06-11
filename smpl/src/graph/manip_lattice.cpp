@@ -334,7 +334,7 @@ void ManipLattice::GetSucc(
         SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
         SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
-        if (!checkAction(parent_entry->state, action)) {
+        if (!checkAction(parent_entry->state, action, thread_id)) {
             continue;
         }
 
@@ -741,6 +741,71 @@ bool ManipLattice::checkAction(const RobotState& state, const Action& action)
         auto& prev_istate = action[j - 1];
         auto& curr_istate = action[j];
         if (!collisionChecker()->isStateToStateValid(prev_istate, curr_istate))
+        {
+            SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> path between waypoints %zu and %zu in collision", j - 1, j);
+            violation_mask |= 0x00000008;
+            break;
+        }
+    }
+
+    if (violation_mask) {
+        return false;
+    }
+
+    return true;
+}
+
+bool ManipLattice::checkAction(const RobotState& state, const Action& action, int thread_id)
+{
+    std::uint32_t violation_mask = 0x00000000;
+
+    // check intermediate states for collisions
+    for (size_t iidx = 0; iidx < action.size(); ++iidx) {
+        const RobotState& istate = action[iidx];
+        SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        " << iidx << ": " << istate);
+
+        // check joint limits
+        if (!robot()->checkJointLimits(istate)) {
+            SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> violates joint limits");
+            violation_mask |= 0x00000001;
+            break;
+        }
+
+        // TODO/NOTE: this can result in an unnecessary number of collision
+        // checks per each action; leaving commented here as it might hint at
+        // an optimization where actions are checked at a coarse resolution as
+        // a way of speeding up overall collision checking; in that case, the
+        // isStateToStateValid function on CollisionChecker would have semantics
+        // meaning "collision check a waypoint path without including the
+        // endpoints".
+//        // check for collisions
+//        if (!collisionChecker()->isStateValid(istate))
+//        {
+//            SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> in collision);
+//            violation_mask |= 0x00000002;
+//            break;
+//        }
+    }
+
+    if (violation_mask) {
+        return false;
+    }
+
+    // check for collisions along path from parent to first waypoint
+    if (!collisionChecker()->isStateToStateValid(thread_id, state, action[0])) {
+        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> path to first waypoint in collision");
+        violation_mask |= 0x00000004;
+    }
+
+    if (violation_mask) {
+        return false;
+    }
+
+    // check for collisions between waypoints
+    for (size_t j = 1; j < action.size(); ++j) {
+        auto& prev_istate = action[j - 1];
+        auto& curr_istate = action[j];
+        if (!collisionChecker()->isStateToStateValid(thread_id, prev_istate, curr_istate))
         {
             SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> path between waypoints %zu and %zu in collision", j - 1, j);
             violation_mask |= 0x00000008;
