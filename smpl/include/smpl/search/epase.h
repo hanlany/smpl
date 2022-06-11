@@ -27,7 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 ////////////////////////////////////////////////////////////////////////////////
 
-/// \author Andrew Dornbush
+/// \author Shohin Mukherjee
 
 #ifndef SMPL_EPASE_H
 #define SMPL_EPASE_H
@@ -328,6 +328,7 @@ private:
         int& elapsed_expansions,
         clock::duration& elapsed_time);
 
+    void expandEdgeLoop(int thread_id);
     void expandEdge(EdgePtrType edge_ptr, int thread_id);
 
     void recomputeHeuristics();
