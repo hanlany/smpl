@@ -410,9 +410,10 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, "smpl_test");
     ros::NodeHandle nh;
     ros::NodeHandle ph("~");
-
-    int num_threads = 1;
-
+    
+    int num_threads;
+    ph.param("num_threads", num_threads, 1);
+    std::cout << "num_threads: " << num_threads << std::endl;
 
     ROS_INFO("Initialize visualizer");
     smpl::VisualizerROS visualizer(nh, 100);
@@ -655,6 +656,7 @@ int main(int argc, char* argv[])
     moveit_msgs::MotionPlanResponse res;
 
     ph.param("allowed_planning_time", req.allowed_planning_time, 10.0);
+
     req.goal_constraints.resize(1);
     FillGoalConstraint(goal, planning_frame, req.goal_constraints[0]);
     req.group_name = robot_config.group_name;
