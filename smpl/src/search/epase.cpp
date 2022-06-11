@@ -585,10 +585,10 @@ int EPASE::improvePath(
                 if (min_edge_ptr)
                 {
                     // Independence check of curr_edge with edges in BE
-                    for (auto& being_expanded_state : m_being_expanded_states)
+                    for (auto& id_state : m_being_expanded_states)
                     {
-                        auto h_diff = computeHeuristic(being_expanded_state, min_edge_ptr->parent_state_ptr);
-                        if (min_edge_ptr->parent_state_ptr->g > being_expanded_state->g + m_curr_eps*h_diff)
+                        auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                        if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
                         {
                             // state_to_expand_found = false;
                             min_edge_ptr = NULL;
@@ -637,7 +637,7 @@ int EPASE::improvePath(
         {
             min_edge_ptr->parent_state_ptr->is_visited = true;
             min_edge_ptr->parent_state_ptr->being_expanded = true;
-            m_being_expanded_states.emplace_back(min_edge_ptr->parent_state_ptr);
+            m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
         }
 
         m_lock.unlock();
@@ -809,7 +809,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
         {
             edge_ptr->parent_state_ptr->being_expanded = false;
-            auto it_state_be = find(m_being_expanded_states.begin(), m_being_expanded_states.end(), edge_ptr->parent_state_ptr);
+            auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
             if (it_state_be != m_being_expanded_states.end())
             {
                 m_being_expanded_states.erase(it_state_be);

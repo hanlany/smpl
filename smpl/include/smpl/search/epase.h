@@ -294,7 +294,7 @@ private:
     double m_satisfied_eps;
 
     EdgePtrMapType m_edge_map;
-    std::vector<StatePtrType> m_being_expanded_states;
+    std::unordered_map<size_t, StatePtrType> m_being_expanded_states;
 
     // Multi-threading members
     int m_num_threads;
