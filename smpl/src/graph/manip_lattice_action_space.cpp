@@ -339,10 +339,6 @@ bool ManipLatticeActionSpace::apply(
 
     (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
 
-    if (actions.empty()) {
-        SMPL_WARN_ONCE("No motion primitives specified");
-    }
-
     return true;
 }
 

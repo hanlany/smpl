@@ -752,6 +752,9 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 
             state_ptr->num_successors+=1;
 
+            if (!edge_ptr_real->parent_state_ptr)
+                edge_ptr_real->Print("wtf1 ");
+
             m_edge_open.push(edge_ptr_real);
         }
 
@@ -818,11 +821,19 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
                         if (m_edge_open.contains(proxy_edge_ptr))
                         {
                             if (VERBOSE) proxy_edge_ptr->Print("Proxy edge already in eopen ");
+                            if (!proxy_edge_ptr->parent_state_ptr)
+                                proxy_edge_ptr->Print("wtf2 ");
+
                             m_edge_open.decrease(proxy_edge_ptr);
                         }
                         else
                         {
+                            
                             if (VERBOSE) proxy_edge_ptr->Print("Inserting proxy edge into eopen ");
+                    
+                            if (!proxy_edge_ptr->parent_state_ptr)
+                                proxy_edge_ptr->Print("wtf3 ");
+
                             m_edge_open.push(proxy_edge_ptr);
                         }
                     } 
