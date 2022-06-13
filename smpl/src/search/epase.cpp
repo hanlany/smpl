@@ -508,15 +508,16 @@ void EPASE::initialize()
     m_num_state_expansions = 0;
     
     m_edge_expansion_vec.clear();
-    m_edge_expansion_vec.resize(m_num_threads-1, NULL);
+    m_edge_expansion_vec.resize(m_num_threads, NULL);
     
     m_edge_expansion_status.clear();
-    m_edge_expansion_status.resize(m_num_threads-1, 0);
+    m_edge_expansion_status.resize(m_num_threads, 0);
 
     m_edge_expansion_futures.clear();
+    m_edge_expansion_futures.resize(1);
     m_being_expanded_states.clear();
 
-    vector<LockType> lock_vec(m_num_threads-1);
+    vector<LockType> lock_vec(m_num_threads);
     m_lock_vec.swap(lock_vec);
 
 }
@@ -644,8 +645,6 @@ int EPASE::improvePath(
 
 
 
-        int thread_id = 0;
-        bool edge_expansion_assigned = false;
 
         if (m_num_threads == 1)
         {
@@ -653,6 +652,8 @@ int EPASE::improvePath(
         }
         else
         {
+            int thread_id = 1;
+            bool edge_expansion_assigned = false;
             while (!edge_expansion_assigned)
             {
                 m_lock_vec[thread_id].lock();
@@ -661,10 +662,9 @@ int EPASE::improvePath(
 
                 if (!status)
                 {
-                    int num_threads_current = m_edge_expansion_futures.size();
-                    if (thread_id >= num_threads_current)
+                    if (thread_id >= m_edge_expansion_futures.size())
                     {
-                        if (VERBOSE) cout << "Spawning edge expansion thread " << thread_id << endl;
+                        if (1) cout << "Spawning edge expansion thread " << thread_id << endl;
                         m_edge_expansion_futures.emplace_back(async(launch::async, &EPASE::expandEdgeLoop, this, thread_id));
                     }
                     m_lock_vec[thread_id].lock();
@@ -674,7 +674,7 @@ int EPASE::improvePath(
                     m_lock_vec[thread_id].unlock();
                 }
                 else
-                    thread_id = thread_id == m_num_threads-2 ? 0 : thread_id+1;
+                    thread_id = thread_id == m_num_threads-1 ? 1 : thread_id+1;
 
             }
         }
@@ -752,9 +752,6 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 
             state_ptr->num_successors+=1;
 
-            if (!edge_ptr_real->parent_state_ptr)
-                edge_ptr_real->Print("wtf1 ");
-
             m_edge_open.push(edge_ptr_real);
         }
 
@@ -772,7 +769,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         m_lock.unlock();
         // Evaluate the edge
         auto t_start = clock::now();
-        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id+1);
+        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
         auto t_end = clock::now();
         //********************
         m_lock.lock();
@@ -821,9 +818,6 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
                         if (m_edge_open.contains(proxy_edge_ptr))
                         {
                             if (VERBOSE) proxy_edge_ptr->Print("Proxy edge already in eopen ");
-                            if (!proxy_edge_ptr->parent_state_ptr)
-                                proxy_edge_ptr->Print("wtf2 ");
-
                             m_edge_open.decrease(proxy_edge_ptr);
                         }
                         else
@@ -831,9 +825,6 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
                             
                             if (VERBOSE) proxy_edge_ptr->Print("Inserting proxy edge into eopen ");
                     
-                            if (!proxy_edge_ptr->parent_state_ptr)
-                                proxy_edge_ptr->Print("wtf3 ");
-
                             m_edge_open.push(proxy_edge_ptr);
                         }
                     } 
@@ -856,6 +847,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             {
                 m_being_expanded_states.erase(it_state_be);
                 m_num_state_expansions += 1;
+                it_state_be->second->Print("Expanded state ");
             }
         }
 
