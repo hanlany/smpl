@@ -174,7 +174,7 @@ public:
 
     bool projectToPoint(int state_id, Vector3& pos) override
     {
-        return projectToPoint(state_id, pos);
+        return projectToPoint(state_id, pos, 0);
     }
 
     virtual bool projectToPose(int state_id, Affine3& pose, int tidx)

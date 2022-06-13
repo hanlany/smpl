@@ -36,6 +36,7 @@
 // standard includes
 #include <time.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -205,7 +206,7 @@ protected:
         -> std::vector<visual::Marker>;
 
 private:
-
+    std::mutex m_lock;
     ForwardKinematicsInterface* m_fk_iface = nullptr;
     ActionSpace* m_actions = nullptr;
 
