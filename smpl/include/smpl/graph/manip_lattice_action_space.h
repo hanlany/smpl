@@ -90,7 +90,7 @@ public:
 
     /// \name Required Public Functions from ActionSpace
     ///@{
-    bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx) override;
+    bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) override;
     bool apply(const RobotState& parent, std::vector<Action>& actions) override;
     ///@}
 
@@ -133,7 +133,7 @@ protected:
         double goal_dist,
         MotionPrimitive::Type type) const;
 
-    auto getStartGoalDistances(const RobotState& state)
+    auto getStartGoalDistances(const RobotState& state, int tidx=0)
         -> std::pair<double, double>;
 };
 

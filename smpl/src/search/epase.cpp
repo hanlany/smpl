@@ -769,7 +769,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
         m_lock.unlock();
         // Evaluate the edge
         auto t_start = clock::now();
-        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id+1);
         auto t_end = clock::now();
         //********************
         m_lock.lock();

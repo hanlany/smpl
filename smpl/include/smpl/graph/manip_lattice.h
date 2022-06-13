@@ -134,6 +134,7 @@ public:
 
     /// \name Required Public Functions from PoseProjectionExtension
     ///@{
+    bool projectToPose(int state_id, Affine3& pos, int tidx) override;
     bool projectToPose(int state_id, Affine3& pos) override;
     ///@}
 
@@ -188,7 +189,7 @@ protected:
     int getOrCreateState(const RobotCoord& coord, const RobotState& state);
     int reserveHashEntry();
 
-    Affine3 computePlanningFrameFK(const RobotState& state) const;
+    Affine3 computePlanningFrameFK(const RobotState& state, int tidx) const;
 
     int cost(
         ManipLatticeState* HashEntry1,
@@ -198,7 +199,7 @@ protected:
     bool checkAction(const RobotState& state, const Action& action);
     bool checkAction(const RobotState& state, const Action& action, int thread_id);
 
-    bool isGoal(const RobotState& state);
+    bool isGoal(const RobotState& state, int tidx=0);
 
     auto getStateVisualization(const RobotState& vars, const std::string& ns)
         -> std::vector<visual::Marker>;

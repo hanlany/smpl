@@ -65,12 +65,25 @@ public:
         const Eigen::Affine3d& pose,
         const RobotState& start,
         RobotState& solution,
-        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED);
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solution, 0, option);}
 
     bool computeFastIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
-        RobotState& solution) override;
+        RobotState& solution,
+        int tidx);
+    bool computeFastIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution) override
+    {return computeFastIK(pose, start, solution, 0);};
     ///@}
 
 private:

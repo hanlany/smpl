@@ -77,6 +77,7 @@ bool Init(
     const std::string& robot_description,
     const std::string& base_link,
     const std::string& tip_link,
+    int num_threads,
     int free_angle)
 {
     ROS_INFO("Initialize KDL Robot Model");
@@ -133,7 +134,7 @@ bool Init(
     }
 
     ROS_INFO("Initialize URDF Robot Model with planning joints = %s", to_string(planning_joints).c_str());
-    if (!urdf::Init(model, &model->m_robot_model, &planning_joints)) {
+    if (!urdf::Init(model, &model->m_robot_model, &planning_joints, num_threads)) {
         ROS_ERROR("Failed to initialize URDF Robot Model");
         return false;
     }
@@ -186,9 +187,10 @@ bool KDLRobotModel::init(
     const std::string& robot_description,
     const std::string& base_link,
     const std::string& tip_link,
+    int num_threads,
     int free_angle)
 {
-    return Init(this, robot_description, base_link, tip_link, free_angle);
+    return Init(this, robot_description, base_link, tip_link, num_threads, free_angle);
 }
 
 auto KDLRobotModel::getBaseLink() const -> const std::string&
@@ -224,10 +226,11 @@ double GetSolverMinPosition(KDLRobotModel* model, int vidx)
 bool KDLRobotModel::computeIKSearch(
     const Eigen::Affine3d& pose,
     const RobotState& start,
-    RobotState& solution)
+    RobotState& solution,
+    int tidx)
 {
     // transform into kinematics and convert to kdl
-    auto* T_map_kinematics = GetLinkTransform(&this->robot_state, m_kinematics_link);
+    auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], m_kinematics_link);
     KDL::Frame frame_des;
     tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
 
@@ -283,24 +286,26 @@ bool KDLRobotModel::computeIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
     RobotState& solution,
+    int tidx,
     ik_option::IkOption option)
 {
     if (option != ik_option::UNRESTRICTED) {
         return false;
     }
 
-    return computeIKSearch(pose, start, solution);
+    return computeIKSearch(pose, start, solution, tidx);
 }
 
 bool KDLRobotModel::computeIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
     std::vector<RobotState>& solutions,
+    int tidx,
     ik_option::IkOption option)
 {
     // NOTE: only returns one solution
     RobotState solution;
-    if (computeIK(pose, start, solution)) {
+    if (computeIK(pose, start, solution, tidx, option)) {
         solutions.push_back(solution);
     }
     return solutions.size() > 0;
@@ -309,10 +314,11 @@ bool KDLRobotModel::computeIK(
 bool KDLRobotModel::computeFastIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
-    RobotState& solution)
+    RobotState& solution,
+    int tidx)
 {
     // transform into kinematics frame and convert to kdl
-    auto* T_map_kinematics = GetLinkTransform(&this->robot_state, m_kinematics_link);
+    auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], m_kinematics_link);
     KDL::Frame frame_des;
     tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
 

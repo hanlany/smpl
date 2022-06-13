@@ -151,6 +151,8 @@ public:
 
     virtual ~PointProjectionExtension() { }
 
+    virtual bool projectToPoint(int state_id, Vector3& pos, int tidx)
+    {SMPL_ERROR("Multi-threaded projectToPose not implemented");};
     virtual bool projectToPoint(int state_id, Vector3& pos) = 0;
 };
 
@@ -160,16 +162,23 @@ public:
 
     virtual ~PoseProjectionExtension() { }
 
-    bool projectToPoint(int state_id, Vector3& pos) override
+    bool projectToPoint(int state_id, Vector3& pos, int tidx) override
     {
         Affine3 pose;
-        if (!projectToPose(state_id, pose)) {
+        if (!projectToPose(state_id, pose, tidx)) {
             return false;
         }
         pos = pose.translation();
         return true;
     }
 
+    bool projectToPoint(int state_id, Vector3& pos) override
+    {
+        return projectToPoint(state_id, pos);
+    }
+
+    virtual bool projectToPose(int state_id, Affine3& pose, int tidx)
+    {SMPL_ERROR("Multi-threaded projectToPose not implemented");};
     virtual bool projectToPose(int state_id, Affine3& pose) = 0;
 };
 

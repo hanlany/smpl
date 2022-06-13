@@ -3,14 +3,15 @@
 // project includes
 #include <smpl_urdf_robot_model/robot_state_bounds.h>
 #include <smpl_urdf_robot_model/robot_model.h>
-
+#include <iostream>
 namespace smpl {
 namespace urdf {
 
 bool Init(
     URDFRobotModel* model,
     const RobotModel* robot_model,
-    const std::vector<std::string>* planning_joint_names)
+    const std::vector<std::string>* planning_joint_names,
+    int num_threads)
 {
     URDFRobotModel urdf_model;
     std::vector<std::string> planning_variables;
@@ -51,9 +52,10 @@ bool Init(
     model->setPlanningJoints(planning_variables);
     model->robot_model = robot_model;
 
-    if (!InitRobotState(&model->robot_state, robot_model)) {
-        return false;
-    }
+    model->robot_state_vec.resize(num_threads);
+    for (int tidx = 0; tidx < num_threads; ++tidx)
+        if (!InitRobotState(&model->robot_state_vec[tidx], robot_model)) 
+            return false;
 
     return true;
 }
@@ -78,26 +80,33 @@ bool SetPlanningLink(URDFRobotModel* urdf_model, const Link* link)
 
 void SetReferenceState(URDFRobotModel* model, const double* positions)
 {
-    SetVariablePositions(&model->robot_state, positions);
+    for (int tidx=0; tidx < model->robot_state_vec.size(); tidx++)
+        SetVariablePositions(&model->robot_state_vec[tidx], positions);
 }
 
 static
-void UpdateState(URDFRobotModel* model, const smpl::RobotState* state)
+void UpdateState(URDFRobotModel* model, const smpl::RobotState* state, int tidx)
 {
     for (auto i = 0; i < model->jointVariableCount(); ++i) {
         SetVariablePosition(
-                &model->robot_state,
+                &model->robot_state_vec[tidx],
                 model->planning_to_state_variable[i],
                 (*state)[i]);
     }
 }
 
+auto URDFRobotModel::computeFK(const smpl::RobotState& state, int tidx)
+    -> Eigen::Affine3d
+{
+    UpdateState(this, &state, tidx);
+    UpdateLinkTransform(&this->robot_state_vec[tidx], this->planning_link);
+    return *GetLinkTransform(&this->robot_state_vec[tidx], this->planning_link);
+}
+
 auto URDFRobotModel::computeFK(const smpl::RobotState& state)
     -> Eigen::Affine3d
 {
-    UpdateState(this, &state);
-    UpdateLinkTransform(&this->robot_state, this->planning_link);
-    return *GetLinkTransform(&this->robot_state, this->planning_link);
+    return computeFK(state, 0);
 }
 
 double URDFRobotModel::minPosLimit(int jidx) const
@@ -132,12 +141,13 @@ double URDFRobotModel::accLimit(int jidx) const
 
 bool URDFRobotModel::checkJointLimits(
     const smpl::RobotState& state,
+    int tidx,
     bool verbose)
 {
-    UpdateState(this, &state);
+    UpdateState(this, &state, tidx);
     for (auto i = 0; i < this->jointVariableCount(); ++i) {
         auto* var = GetVariable(this->robot_model, this->planning_to_state_variable[i]);
-        if (!SatisfiesBounds(&this->robot_state, var)) {
+        if (!SatisfiesBounds(&this->robot_state_vec[tidx], var)) {
             return false;
         }
     }
