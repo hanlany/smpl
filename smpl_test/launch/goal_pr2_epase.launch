@@ -1,5 +1,6 @@
 <launch>
     <arg name="debug" default="false"/>
+    <arg name="args" default=""/>
 
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find pr2_description)/robots/pr2.urdf.xacro'"/>
 
@@ -7,7 +8,7 @@
     <arg     if="$(arg debug)" name="launch-prefix" value="xterm -e gdb --args"/>
 
     <node pkg="smpl_test" type="callPlannerEpase" name="call_planner_epase"
-            launch-prefix="$(arg launch-prefix)">
+            launch-prefix="$(arg launch-prefix)" args="$(arg args)">
         <param name="planning_frame" value="odom_combined"/>
 
         <!-- 1. robot model (for planning) -->

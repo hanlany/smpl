@@ -651,8 +651,9 @@ bool CollisionSpaceMultithread::init(
             m_rcs[thread_idx]->getJointVarPositions(),
             m_rcs[thread_idx]->getJointVarPositions() + m_rcm->jointVarCount());
     
-        m_wcm[thread_idx] = std::make_shared<WorldCollisionModel>(m_grid);
-        m_scm[thread_idx] = std::make_shared<SelfCollisionModel>(m_grid, m_rcm.get(), m_abcm.get());
+        auto grid = new OccupancyGrid(*m_grid);
+        m_wcm[thread_idx] = std::make_shared<WorldCollisionModel>(grid);
+        m_scm[thread_idx] = std::make_shared<SelfCollisionModel>(grid, m_rcm.get(), m_abcm.get());
     }
 
 

@@ -411,8 +411,13 @@ int main(int argc, char* argv[])
     ros::NodeHandle nh;
     ros::NodeHandle ph("~");
     
-    int num_threads;
-    ph.param("num_threads", num_threads, 1);
+    int num_threads;    
+    
+    if (argc == 2)
+        num_threads = atoi(argv[1]);
+    else
+        ph.param("num_threads", num_threads, 1);
+    
     std::cout << "num_threads: " << num_threads << std::endl;
 
     ROS_INFO("Initialize visualizer");
