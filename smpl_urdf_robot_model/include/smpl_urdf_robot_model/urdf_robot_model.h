@@ -29,12 +29,15 @@ struct URDFRobotModel :
     const ::smpl::urdf::RobotModel* robot_model = NULL;
 
     // persistent robot state to cache unchanging transforms
-    RobotState robot_state;
+    std::vector<RobotState> robot_state_vec;
 
     std::vector<VariableProperties> vprops;
     std::vector<int> planning_to_state_variable;
     const Link* planning_link = NULL;
 
+
+    auto computeFK(const smpl::RobotState& state, int tidx)
+        -> Eigen::Affine3d override;
     auto computeFK(const smpl::RobotState& state)
         -> Eigen::Affine3d override;
 
@@ -46,19 +49,23 @@ struct URDFRobotModel :
     double accLimit(int jidx) const override;
     bool checkJointLimits(
         const smpl::RobotState& state,
-        bool verbose = false) override;
-
+        int tidx,
+        bool verbose = false);
+    bool checkJointLimits(
+        const smpl::RobotState& state,
+        bool verbose = false) override
+    {return checkJointLimits(state, 0, verbose);};
     auto getExtension(size_t class_code) -> smpl::Extension* override;
 };
 
 bool Init(
     URDFRobotModel* urdf_model,
     const RobotModel* robot_model,
-    const std::vector<std::string>* planning_joint_names);
+    const std::vector<std::string>* planning_joint_names, int num_threads = 1);
 bool Init(
     URDFRobotModel* urdf_model,
     const RobotModel* robot_model,
-    const std::vector<const Joint*>* planning_joints);
+    const std::vector<const Joint*>* planning_joints, int num_threads = 1);
 
 bool SetPlanningLink(URDFRobotModel* urdf_model, const char* link_name);
 bool SetPlanningLink(URDFRobotModel* urdf_model, const std::string* link_name);

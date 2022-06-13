@@ -63,6 +63,7 @@ public:
         const std::string& robot_description,
         const std::string& base_link,
         const std::string& tip_link,
+        int num_threads = 1,
         int free_angle = DEFAULT_FREE_ANGLE_INDEX);
 
     auto getBaseLink() const -> const std::string&;
@@ -71,7 +72,8 @@ public:
     bool computeIKSearch(
         const Eigen::Affine3d& pose,
         const RobotState& start,
-        RobotState& solution);
+        RobotState& solution,
+        int tidx);
 
     void printRobotModelInformation();
 
@@ -82,7 +84,14 @@ public:
     bool computeFastIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
-        RobotState& solution) override;
+        RobotState& solution,
+        int tidx);
+    bool computeFastIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution) override
+    {return computeFastIK(pose, start, solution, 0);};
+
     /// @}
 
     /// \name InverseKinematicsInterface Interface
@@ -91,13 +100,28 @@ public:
         const Eigen::Affine3d& pose,
         const RobotState& start,
         RobotState& solution,
-        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED);
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solution, 0, option);}
 
     bool computeIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
         std::vector<RobotState>& solutions,
-        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED);
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        std::vector<RobotState>& solutions,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solutions, 0, option);}
+
     ///@}
 
     /// \name Extension Interface

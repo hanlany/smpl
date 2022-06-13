@@ -143,7 +143,7 @@ void BfsHeuristic::updateGoal(const GoalConstraint& goal)
     }
 }
 
-double BfsHeuristic::getMetricStartDistance(double x, double y, double z)
+double BfsHeuristic::getMetricStartDistance(double x, double y, double z, int tidx)
 {
     int start_id = planningSpace()->getStartStateID();
 
@@ -152,7 +152,7 @@ double BfsHeuristic::getMetricStartDistance(double x, double y, double z)
     }
 
     Vector3 p;
-    if (!m_pp->projectToPoint(planningSpace()->getStartStateID(), p)) {
+    if (!m_pp->projectToPoint(planningSpace()->getStartStateID(), p, tidx)) {
         return 0.0;
     }
 
@@ -167,6 +167,11 @@ double BfsHeuristic::getMetricStartDistance(double x, double y, double z)
     const int dy = sy - gy;
     const int dz = sz - gz;
     return grid()->resolution() * (abs(dx) + abs(dy) + abs(dz));
+}
+
+double BfsHeuristic::getMetricStartDistance(double x, double y, double z)
+{
+    return getMetricStartDistance(x, y, z, 0);
 }
 
 double BfsHeuristic::getMetricGoalDistance(double x, double y, double z)

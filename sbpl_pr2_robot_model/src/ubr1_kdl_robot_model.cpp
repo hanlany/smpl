@@ -86,11 +86,12 @@ bool UBR1KDLRobotModel::computeIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
     RobotState& solution,
+    int tidx,
     ik_option::IkOption option)
 {
     if (option == ik_option::RESTRICT_XYZ && m_rpy_solver) {
         // transform into kinematics and convert to kdl
-        auto* T_map_kinematics = GetLinkTransform(&this->robot_state, this->m_kinematics_link);
+        auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], this->m_kinematics_link);
         KDL::Frame frame_des;
         tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
 
@@ -104,16 +105,16 @@ bool UBR1KDLRobotModel::computeIK(
         for (auto i = 0; i < this->getPlanningJoints().size(); ++i) {
             auto& var_name = this->getPlanningJoints()[i];
             auto* var = GetVariable(this->robot_model, &var_name);
-            SetVariablePosition(&this->robot_state, var, start[i]);
+            SetVariablePosition(&this->robot_state_vec[tidx], var, start[i]);
         }
 
         auto* forearm_link = GetLink(this->robot_model, &m_forearm_roll_link_name);
         auto* end_effector_link = GetLink(this->robot_model, &m_end_effector_link_name);
-        UpdateLinkTransform(&this->robot_state, forearm_link);
-        UpdateLinkTransform(&this->robot_state, end_effector_link);
+        UpdateLinkTransform(&this->robot_state_vec[tidx], forearm_link);
+        UpdateLinkTransform(&this->robot_state_vec[tidx], end_effector_link);
 
-        auto* forearm_pose = GetLinkTransform(&this->robot_state, forearm_link);
-        auto* end_effector_pose = GetLinkTransform(&this->robot_state, end_effector_link);
+        auto* forearm_pose = GetLinkTransform(&this->robot_state_vec[tidx], forearm_link);
+        auto* end_effector_pose = GetLinkTransform(&this->robot_state_vec[tidx], end_effector_link);
 
         KDL::Frame fpose;
         KDL::Frame epose;

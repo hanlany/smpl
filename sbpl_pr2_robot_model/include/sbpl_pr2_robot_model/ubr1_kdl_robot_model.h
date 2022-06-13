@@ -57,7 +57,14 @@ public:
         const Eigen::Affine3d& pose,
         const RobotState& start,
         RobotState& solution,
-        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED);
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solution, 0, option);}
 
 private:
 

@@ -63,6 +63,7 @@ public:
 
     /// \name Required Public Functions from RobotHeuristic
     ///@{
+    double getMetricStartDistance(double x, double y, double z, int tidx) override;
     double getMetricStartDistance(double x, double y, double z) override;
     double getMetricGoalDistance(double x, double y, double z) override;
     ///@}

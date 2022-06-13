@@ -302,21 +302,22 @@ void ManipLatticeActionSpace::ampThresh(
     }
 }
 
-auto ManipLatticeActionSpace::getStartGoalDistances(const RobotState& state)
+auto ManipLatticeActionSpace::getStartGoalDistances(const RobotState& state, int tidx)
     -> std::pair<double, double>
 {
     if (!m_fk_iface) {
         return std::make_pair(0.0, 0.0);
     }
 
-    auto pose = m_fk_iface->computeFK(state);
+    auto pose = m_fk_iface->computeFK(state, tidx);
 
     if (planningSpace()->numHeuristics() > 0) {
         RobotHeuristic* h = planningSpace()->heuristic(0);
         double start_dist = h->getMetricStartDistance(
                 pose.translation()[0],
                 pose.translation()[1],
-                pose.translation()[2]);
+                pose.translation()[2],
+                tidx);
         double goal_dist = h->getMetricGoalDistance(
                 pose.translation()[0],
                 pose.translation()[1],
@@ -330,10 +331,11 @@ auto ManipLatticeActionSpace::getStartGoalDistances(const RobotState& state)
 bool ManipLatticeActionSpace::apply(
     const RobotState& parent,
     std::vector<Action>& actions,
-    int action_idx)
+    int action_idx,
+    int tidx)
 {
     double goal_dist, start_dist;
-    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent);
+    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent, tidx);
 
     (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
 

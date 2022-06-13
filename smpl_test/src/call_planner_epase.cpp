@@ -386,7 +386,7 @@ bool ReadPlannerConfig(const ros::NodeHandle &nh, PlannerConfig &config)
     return true;
 }
 
-auto SetupRobotModel(const std::string& urdf, const RobotModelConfig &config)
+auto SetupRobotModel(const std::string& urdf, const RobotModelConfig &config, int num_threads)
     -> std::unique_ptr<smpl::KDLRobotModel>
 {
     if (config.kinematics_frame.empty() || config.chain_tip_link.empty()) {
@@ -397,7 +397,7 @@ auto SetupRobotModel(const std::string& urdf, const RobotModelConfig &config)
     ROS_INFO("Construct Generic KDL Robot Model");
     std::unique_ptr<smpl::KDLRobotModel> rm(new smpl::KDLRobotModel);
 
-    if (!rm->init(urdf, config.kinematics_frame, config.chain_tip_link)) {
+    if (!rm->init(urdf, config.kinematics_frame, config.chain_tip_link, num_threads)) {
         ROS_ERROR("Failed to initialize robot model.");
         return NULL;
     }
@@ -553,7 +553,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto rm = SetupRobotModel(robot_description, robot_config);
+    auto rm = SetupRobotModel(robot_description, robot_config, num_threads);
     if (!rm) {
         ROS_ERROR("Failed to set up Robot Model");
         return 1;

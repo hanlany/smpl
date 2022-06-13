@@ -44,6 +44,7 @@
 #include <smpl/extension.h>
 #include <smpl/spatial.h>
 #include <smpl/types.h>
+#include <smpl/console/console.h>
 
 namespace smpl {
 
@@ -99,6 +100,8 @@ public:
     /// { x, y, z, R, P, Y } of the planning link
     ///
     /// \return true if forward kinematics were computed; false otherwise
+    virtual Affine3 computeFK(const RobotState& state, int tidx)
+    {SMPL_ERROR("Multi-threaded computeFK not implemented");};
     virtual Affine3 computeFK(const RobotState& state) = 0;
 };
 

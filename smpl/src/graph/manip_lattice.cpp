@@ -291,7 +291,7 @@ void ManipLattice::GetSucc(
     int action_idx,
     std::vector<int>* succs,
     std::vector<int>* costs,
-    int thread_id)
+    int tidx)
 {
     assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
     assert(succs && costs && "successor buffer is null");
@@ -319,7 +319,7 @@ void ManipLattice::GetSucc(
     int goal_succ_count = 0;
 
     std::vector<Action> actions;
-    if (!m_actions->apply(parent_entry->state, actions, action_idx)) {
+    if (!m_actions->apply(parent_entry->state, actions, action_idx, tidx)) {
         SMPL_WARN("Failed to get actions");
         return;
     }
@@ -334,7 +334,7 @@ void ManipLattice::GetSucc(
         SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
         SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
-        if (!checkAction(parent_entry->state, action, thread_id)) {
+        if (!checkAction(parent_entry->state, action, tidx)) {
             continue;
         }
 
@@ -538,15 +538,20 @@ const RobotState& ManipLattice::extractState(int state_id)
     return m_states[state_id]->state;
 }
 
-bool ManipLattice::projectToPose(int state_id, Affine3& pose)
+bool ManipLattice::projectToPose(int state_id, Affine3& pose, int tidx)
 {
     if (state_id == getGoalStateID()) {
         pose = goal().pose;
         return true;
     }
 
-    pose = computePlanningFrameFK(m_states[state_id]->state);
+    pose = computePlanningFrameFK(m_states[state_id]->state, tidx);
     return true;
+}
+
+bool ManipLattice::projectToPose(int state_id, Affine3& pose)
+{
+    return projectToPose(state_id, pose, 0);
 }
 
 void ManipLattice::GetPreds(
@@ -672,13 +677,13 @@ int ManipLattice::reserveHashEntry()
 
 /// NOTE: const although RobotModel::computeFK used underneath may
 /// not be
-auto ManipLattice::computePlanningFrameFK(const RobotState& state) const
+auto ManipLattice::computePlanningFrameFK(const RobotState& state, int tidx) const
     -> Affine3
 {
     assert(state.size() == robot()->jointVariableCount());
     assert(m_fk_iface);
 
-    return m_fk_iface->computeFK(state);
+    return m_fk_iface->computeFK(state, tidx);
 }
 
 int ManipLattice::cost(
@@ -755,7 +760,7 @@ bool ManipLattice::checkAction(const RobotState& state, const Action& action)
     return true;
 }
 
-bool ManipLattice::checkAction(const RobotState& state, const Action& action, int thread_id)
+bool ManipLattice::checkAction(const RobotState& state, const Action& action, int tidx)
 {
     std::uint32_t violation_mask = 0x00000000;
 
@@ -792,7 +797,7 @@ bool ManipLattice::checkAction(const RobotState& state, const Action& action, in
     }
 
     // check for collisions along path from parent to first waypoint
-    if (!collisionChecker()->isStateToStateValid(thread_id, state, action[0])) {
+    if (!collisionChecker()->isStateToStateValid(tidx, state, action[0])) {
         SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> path to first waypoint in collision");
         violation_mask |= 0x00000004;
     }
@@ -805,7 +810,7 @@ bool ManipLattice::checkAction(const RobotState& state, const Action& action, in
     for (size_t j = 1; j < action.size(); ++j) {
         auto& prev_istate = action[j - 1];
         auto& curr_istate = action[j];
-        if (!collisionChecker()->isStateToStateValid(thread_id, prev_istate, curr_istate))
+        if (!collisionChecker()->isStateToStateValid(tidx, prev_istate, curr_istate))
         {
             SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> path between waypoints %zu and %zu in collision", j - 1, j);
             violation_mask |= 0x00000008;
@@ -866,7 +871,7 @@ auto WithinTolerance(
     return std::make_pair(false, false);
 }
 
-bool ManipLattice::isGoal(const RobotState& state)
+bool ManipLattice::isGoal(const RobotState& state, int tidx)
 {
     switch (goal().type) {
     case GoalType::JOINT_STATE_GOAL:
@@ -881,7 +886,7 @@ bool ManipLattice::isGoal(const RobotState& state)
     case GoalType::XYZ_RPY_GOAL:
     {
         // get pose of planning link
-        auto pose = computePlanningFrameFK(state);
+        auto pose = computePlanningFrameFK(state, tidx);
 
         auto near = WithinTolerance(
                 pose,
@@ -892,7 +897,7 @@ bool ManipLattice::isGoal(const RobotState& state)
     }
     case GoalType::MULTIPLE_POSE_GOAL:
     {
-        auto pose = computePlanningFrameFK(state);
+        auto pose = computePlanningFrameFK(state, tidx);
         for (auto& goal_pose : goal().poses) {
             auto near = WithinTolerance(
                     pose, goal_pose,
@@ -905,7 +910,7 @@ bool ManipLattice::isGoal(const RobotState& state)
     }
     case GoalType::XYZ_GOAL:
     {
-        auto pose = computePlanningFrameFK(state);
+        auto pose = computePlanningFrameFK(state, tidx);
         return WithinPositionTolerance(pose, goal().pose, goal().xyz_tolerance);
     }
     case GoalType::USER_GOAL_CONSTRAINT_FN:
