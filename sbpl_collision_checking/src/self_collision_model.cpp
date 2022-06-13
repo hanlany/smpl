@@ -43,7 +43,7 @@ namespace smpl {
 namespace collision {
 
 static const char* SCM_LOGGER = "self";
-std::mutex SelfCollisionModel::m_lock;
+// std::mutex SelfCollisionModel::m_lock;
 
 SelfCollisionModel::SelfCollisionModel(
     OccupancyGrid* grid,
@@ -470,15 +470,15 @@ void SelfCollisionModel::updateGroup(int gidx)
     // insert/remove the voxels
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels from old voxels models", v_rem.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
-        m_lock.unlock();
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels from new voxels models", v_ins.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
-        m_lock.unlock();
+        // m_lock.unlock();
     }
 
     // prepare voxels indices
@@ -523,15 +523,15 @@ void SelfCollisionModel::updateGroup(int gidx)
     // insert/remove the voxels
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels from old voxels models", v_rem.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
-        m_lock.unlock();
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels from new voxels models", v_ins.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
-        m_lock.unlock();
+        // m_lock.unlock();
 
     }
 
@@ -640,15 +640,15 @@ void SelfCollisionModel::updateVoxelsStates()
     // update occupancy grid with new voxel data
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels", v_rem.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
-        m_lock.unlock();
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels", v_ins.size());
-        m_lock.lock();
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
-        m_lock.unlock();
+        // m_lock.unlock();
     }
 }
 
@@ -673,9 +673,9 @@ bool SelfCollisionModel::checkRobotVoxelsStateCollisions(double& dist)
     }
 #endif
 
-    m_lock.lock();
+    // m_lock.lock();
     bool res = CheckVoxelsCollisions(m_rcs, q, *m_grid, m_padding, dist);
-    m_lock.unlock();
+    // m_lock.unlock();
 
     return res;
 }
@@ -694,9 +694,9 @@ bool SelfCollisionModel::checkAttachedBodyVoxelsStateCollisions(
         q.push_back(s);
     }
 
-    m_lock.lock();
+    // m_lock.lock();
     bool res = CheckVoxelsCollisions(m_abcs, q, *m_grid, m_padding, dist);
-    m_lock.unlock();
+    // m_lock.unlock();
 
     return res;
 }
@@ -1442,9 +1442,9 @@ double SelfCollisionModel::robotVoxelsCollisionDistance()
 
         ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
 
-        m_lock.lock();
+        // m_lock.lock();
         double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
-        m_lock.unlock();
+        // m_lock.unlock();
 
         if (obs_dist >= d) {
             continue; // further -> ok!

@@ -133,7 +133,7 @@ public:
 
     // TODO: contacts checks
     // TODO: detailed checks
-    static std::mutex m_lock;
+    // static std::mutex m_lock;
 
 private:
 
