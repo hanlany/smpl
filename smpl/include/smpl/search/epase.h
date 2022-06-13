@@ -198,6 +198,7 @@ private:
         {
             std::cout << str << "id: " << state_id 
             << " | g: " << g
+            << " | h: " << h
             << " | is_visited: " << is_visited
             << " | being_expanded: " << being_expanded
             << " | expanded succs: " << num_expanded_successors << "/" << num_successors
