@@ -488,6 +488,7 @@ int main(int argc, char* argv[])
 
     auto ref_counted = false;
     smpl::OccupancyGrid grid(df, ref_counted);
+    std::vector<smpl::OccupancyGrid*> grid_vec;
 
     grid.setReferenceFrame(planning_frame);
     SV_SHOW_INFO(grid.getBoundingBoxVisualization());
@@ -512,6 +513,7 @@ int main(int argc, char* argv[])
     if (!cc.init(
             num_threads,
             &grid,
+            grid_vec,
             robot_description,
             cc_conf,
             robot_config.group_name,
@@ -614,7 +616,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    smpl::PlannerInterface planner(rm.get(), &cc, &grid);
+    smpl::PlannerInterface planner(rm.get(), &cc, grid_vec);
 
     smpl::PlanningParams params;
 

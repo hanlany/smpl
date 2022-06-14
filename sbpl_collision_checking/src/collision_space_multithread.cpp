@@ -75,6 +75,8 @@ static const char* LOG = "cspace";
 
 CollisionSpaceMultithread::~CollisionSpaceMultithread()
 {
+    for (auto& grid: m_grid_vec)
+        delete grid;
 }
 
 /// \brief Set a joint variable in the robot state
@@ -555,6 +557,7 @@ auto CollisionSpaceMultithread::getCollisionModelVisualization(const RobotState&
 bool CollisionSpaceMultithread::init(
     int num_threads,
     OccupancyGrid* grid,
+    std::vector<OccupancyGrid*>& grid_vec,
     const std::string& urdf_string,
     const CollisionModelConfig& config,
     const std::string& group_name,
@@ -566,7 +569,7 @@ bool CollisionSpaceMultithread::init(
         return false;
     }
 
-    return init(num_threads, grid, *urdf, config, group_name, planning_joints);
+    return init(num_threads, grid, grid_vec, *urdf, config, group_name, planning_joints);
 }
 
 /// \brief Initialize the Collision Space
@@ -578,6 +581,7 @@ bool CollisionSpaceMultithread::init(
 bool CollisionSpaceMultithread::init(
     int num_threads,
     OccupancyGrid* grid,
+    std::vector<OccupancyGrid*>& grid_vec,
     const ::urdf::ModelInterface& urdf,
     const CollisionModelConfig& config,
     const std::string& group_name,
@@ -586,7 +590,7 @@ bool CollisionSpaceMultithread::init(
     ROS_DEBUG_NAMED(LOG, "Initializing collision space for group '%s'", group_name.c_str());
 
     auto rcm = RobotCollisionModel::Load(urdf, config);
-    return init(num_threads, grid, rcm, group_name, planning_joints);
+    return init(num_threads, grid, grid_vec, rcm, group_name, planning_joints);
 }
 
 /// \brief Initialize the Collision Space
@@ -597,6 +601,7 @@ bool CollisionSpaceMultithread::init(
 bool CollisionSpaceMultithread::init(
     int num_threads,    
     OccupancyGrid* grid,
+    std::vector<OccupancyGrid*>& grid_vec,
     const RobotCollisionModelConstPtr& rcm,
     const std::string& group_name,
     const std::vector<std::string>& planning_joints)
@@ -651,12 +656,18 @@ bool CollisionSpaceMultithread::init(
             m_rcs[thread_idx]->getJointVarPositions(),
             m_rcs[thread_idx]->getJointVarPositions() + m_rcm->jointVarCount());
     
-        auto grid = new OccupancyGrid(*m_grid);
+        OccupancyGrid* grid;
+        if (thread_idx == 0)
+            grid = m_grid;
+        else
+            grid = new OccupancyGrid(*m_grid);
+        grid_vec.emplace_back(grid);
+        
         m_wcm[thread_idx] = std::make_shared<WorldCollisionModel>(grid);
         m_scm[thread_idx] = std::make_shared<SelfCollisionModel>(grid, m_rcm.get(), m_abcm.get());
     }
 
-
+    m_grid_vec = grid_vec;
 
     return true;
 }
