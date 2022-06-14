@@ -67,6 +67,7 @@ public:
     bool init(
         int num_threads,
         OccupancyGrid* grid,
+        std::vector<OccupancyGrid*>& grid_vec,
         const std::string& urdf_string,
         const CollisionModelConfig& config,
         const std::string& group_name,
@@ -75,6 +76,7 @@ public:
     bool init(
         int num_threads,
         OccupancyGrid* grid,
+        std::vector<OccupancyGrid*>& grid_vec,
         const ::urdf::ModelInterface& urdf,
         const CollisionModelConfig& config,
         const std::string& group_name,
@@ -83,6 +85,7 @@ public:
     bool init(
         int num_threads,        
         OccupancyGrid* grid,
+        std::vector<OccupancyGrid*>& grid_vec,
         const RobotCollisionModelConstPtr& rcm,
         const std::string& group_name,
         const std::vector<std::string>& planning_joints);
@@ -238,6 +241,8 @@ public:
     int num_threads_;
 
     OccupancyGrid*                  m_grid;
+    std::vector<OccupancyGrid*>     m_grid_vec;
+
     std::vector<std::string>        m_planning_variables;
 
     RobotCollisionModelConstPtr         m_rcm;

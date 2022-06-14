@@ -184,7 +184,6 @@ PlannerInterface::PlannerInterface(
 :
     m_robot(robot),
     m_checker(checker),
-    m_grid(grid),
     m_fk_iface(nullptr),
     m_params(),
     m_initialized(false),
@@ -193,6 +192,32 @@ PlannerInterface::PlannerInterface(
     m_planner(),
     m_sol_cost(INFINITECOST),
     m_planner_id()
+{
+    m_grid_vec = {grid};
+    construct();
+}
+
+PlannerInterface::PlannerInterface(
+    RobotModel* robot,
+    CollisionChecker* checker,
+    std::vector<OccupancyGrid*> grid_vec)
+:
+    m_robot(robot),
+    m_checker(checker),
+    m_fk_iface(nullptr),
+    m_params(),
+    m_initialized(false),
+    m_pspace(),
+    m_heuristics(),
+    m_planner(),
+    m_sol_cost(INFINITECOST),
+    m_planner_id()
+{
+    m_grid_vec = grid_vec;
+    construct();
+}    
+
+void PlannerInterface::construct()
 {
     if (m_robot) {
         m_fk_iface = m_robot->getExtension<ForwardKinematicsInterface>();
@@ -207,7 +232,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeManipLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeManipLattice(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["manip_lattice_egraph"] = [this](
@@ -215,7 +241,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeManipLatticeEGraph(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeManipLatticeEGraph(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["workspace"] = [this](
@@ -223,7 +250,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeWorkspaceLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeWorkspaceLattice(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["workspace_egraph"] = [this](
@@ -231,7 +259,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeWorkspaceLatticeEGraph(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeWorkspaceLatticeEGraph(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["adaptive_workspace_lattice"] = [this](
@@ -239,7 +268,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeAdaptiveWorkspaceLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeAdaptiveWorkspaceLattice(r, c, p, m_grid_vec[i]);
     };
 
     ///////////////////////////////
@@ -250,14 +280,16 @@ PlannerInterface::PlannerInterface(
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeMultiFrameBFSHeuristic(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeMultiFrameBFSHeuristic(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["bfs"] = [this](
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeBFSHeuristic(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeBFSHeuristic(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["euclid"] = MakeEuclidDistHeuristic;
@@ -268,7 +300,8 @@ PlannerInterface::PlannerInterface(
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeDijkstraEgraphHeuristic3D(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeDijkstraEgraphHeuristic3D(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["joint_distance_egraph"] = MakeJointDistEGraphHeuristic;
@@ -308,9 +341,12 @@ bool PlannerInterface::init(const PlanningParams& params)
         return false;
     }
 
-    if (!m_grid) {
-        SMPL_ERROR("Occupancy Grid given to Arm Planner Interface must be non-null");
-        return false;
+    for (int i = 0; i < m_grid_vec.size(); ++i)
+    {
+        if (!m_grid_vec[i]) {
+            SMPL_ERROR("All Occupancy Grids given to Arm Planner Interface must be non-null");
+            return false;
+        }
     }
 
     if (params.cost_per_cell < 0) {

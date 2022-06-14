@@ -87,6 +87,11 @@ public:
         CollisionChecker* checker,
         OccupancyGrid* grid);
 
+    PlannerInterface(
+        RobotModel* robot,
+        CollisionChecker* checker,
+        std::vector<OccupancyGrid*> grid_vec);
+
     ~PlannerInterface();
 
     bool init(const PlanningParams& params);
@@ -144,7 +149,7 @@ protected:
 
     RobotModel* m_robot;
     CollisionChecker* m_checker;
-    OccupancyGrid* m_grid;
+    std::vector<OccupancyGrid*> m_grid_vec;
 
     ForwardKinematicsInterface* m_fk_iface;
 
@@ -166,6 +171,9 @@ protected:
     int m_sol_cost;
 
     std::string m_planner_id;
+
+    void construct();
+
 
     // Set start configuration
     bool setGoal(const GoalConstraints& v_goal_constraints);
