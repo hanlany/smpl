@@ -215,7 +215,7 @@ private:
 
     struct Edge : public heap_element
     {
-        int edge_id = -1;
+        size_t edge_id = -1;
         int action_idx = -1;
 
         SearchState* parent_state_ptr=NULL;
@@ -244,7 +244,7 @@ private:
         {
             // Default fifo ordering
             if (e1.exp_priority == e2.exp_priority) // tie breaking
-                return e1.parent_state_ptr->state_id < e2.parent_state_ptr->state_id;
+                return e1.action_idx < e2.action_idx;
             else
                 return e1.exp_priority < e2.exp_priority;
         }
