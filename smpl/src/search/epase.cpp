@@ -626,10 +626,10 @@ int EPASE::improvePath(
                 return SUCCESS;
             }
 
-            if (timedOut(elapsed_expansions, elapsed_time)) {
-                SMPL_DEBUG_NAMED(SLOG, "Ran out of time");
-                return TIMED_OUT;
-            }
+            // if (timedOut(elapsed_expansions, elapsed_time)) {
+            //     SMPL_DEBUG_NAMED(SLOG, "Ran out of time");
+            //     return TIMED_OUT;
+            // }
 
         }
 
@@ -726,7 +726,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 {
     m_lock.lock();
 
-    if (VERBOSE) edge_ptr->Print("Expanding");
+    if (1) edge_ptr->Print("Expanding ");
     // cout << "------------------" << endl;
     auto state_ptr = edge_ptr->parent_state_ptr;
     
@@ -748,7 +748,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             edge_ptr_real->edge_id = getEdgeKey(edge_ptr_real);
             m_edge_map.insert(make_pair(edge_ptr_real->edge_id, edge_ptr_real));
 
-            if (VERBOSE) edge_ptr_real->Print("Inserting real edge into eopen ");
+            if (1) edge_ptr_real->Print("Inserting real edge into eopen ");
 
             state_ptr->num_successors+=1;
 
@@ -800,6 +800,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
                         auto edge_key = getEdgeKey(proxy_edge_ptr);
                         auto it_edge = m_edge_map.find(edge_key); 
 
+                        succ_state->Print("Succ ");
 
                         if (it_edge == m_edge_map.end())
                         {
@@ -848,6 +849,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
                 m_being_expanded_states.erase(it_state_be);
                 m_num_state_expansions += 1;
                 it_state_be->second->Print("Expanded state ");
+                getchar();
             }
         }
 
@@ -862,6 +864,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     }    
 
     m_lock.unlock();
+    // getchar();
 }
 
 // Recompute the f-values of all states in OPEN and reorder OPEN.
