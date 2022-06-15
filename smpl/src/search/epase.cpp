@@ -545,7 +545,6 @@ int EPASE::improvePath(
 
             // cout << "eopen size: " << m_edge_open.size() << endl;
             // cout << "be size: " << m_being_expanded_states.size() << endl;
-            cout << "Num state expansions: " << m_num_state_expansions << endl;
 
             if (m_edge_open.empty() && m_being_expanded_states.empty())
             {
@@ -564,6 +563,9 @@ int EPASE::improvePath(
                 min_edge_ptr = m_edge_open.min();
                 m_edge_open.pop();
                 popped_edges.emplace_back(min_edge_ptr);
+
+                if (min_edge_ptr->parent_state_ptr->being_expanded)
+                    continue;
 
                 // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
                 for (auto& popped_edge_ptr : popped_edges)
@@ -652,7 +654,7 @@ int EPASE::improvePath(
         m_lock.unlock();
 
 
-
+        if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
 
         if (m_num_threads == 1)
         {
