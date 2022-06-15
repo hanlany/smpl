@@ -101,7 +101,7 @@ public:
         const RobotState& start,
         RobotState& solution,
         int tidx,
-        ik_option::IkOption option = ik_option::UNRESTRICTED);
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
     bool computeIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
@@ -114,7 +114,7 @@ public:
         const RobotState& start,
         std::vector<RobotState>& solutions,
         int tidx,
-        ik_option::IkOption option = ik_option::UNRESTRICTED);
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override;
     bool computeIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
@@ -143,9 +143,9 @@ public:
     KDL::Tree m_tree;
     KDL::Chain m_chain;
 
-    std::unique_ptr<KDL::ChainFkSolverPos_recursive>    m_fk_solver;
-    std::unique_ptr<KDL::ChainIkSolverVel_pinv>         m_ik_vel_solver;
-    std::unique_ptr<KDL::ChainIkSolverPos_NR_JL>        m_ik_solver;
+    std::vector<std::unique_ptr<KDL::ChainFkSolverPos_recursive>>    m_fk_solver_vec;
+    std::vector<std::unique_ptr<KDL::ChainIkSolverVel_pinv>>         m_ik_vel_solver_vec;
+    std::vector<std::unique_ptr<KDL::ChainIkSolverPos_NR_JL>>        m_ik_solver_vec;
 
     // ik solver settings
     int m_max_iterations;

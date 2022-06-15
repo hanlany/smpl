@@ -119,14 +119,16 @@ protected:
         const Affine3& goal,
         double dist_to_goal,
         ik_option::IkOption option,
-        std::vector<Action>& actions);
+        std::vector<Action>& actions,
+        int tidx);
 
     virtual bool getAction(
         const RobotState& parent,
         double goal_dist,
         double start_dist,
         const MotionPrimitive& mp,
-        std::vector<Action>& actions);
+        std::vector<Action>& actions,
+        int tidx=0);
 
     bool mprimActive(
         double start_dist,
