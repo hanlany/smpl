@@ -565,21 +565,18 @@ int EPASE::improvePath(
                 m_edge_open.pop();
                 popped_edges.emplace_back(min_edge_ptr);
 
-                // state_to_expand_found = true;
-
-                if (min_edge_ptr->parent_state_ptr->being_expanded)
-                    continue;
-
                 // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
                 for (auto& popped_edge_ptr : popped_edges)
                 {
-                    auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
-
-                    if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
+                    if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
                     {
-                        // state_to_expand_found = false;
-                        min_edge_ptr = NULL;
-                        break;
+                        auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
+                        if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
+                        {
+                            // state_to_expand_found = false;
+                            min_edge_ptr = NULL;
+                            break;
+                        }
                     }
                 }
      
@@ -588,16 +585,23 @@ int EPASE::improvePath(
                     // Independence check of curr_edge with edges in BE
                     for (auto& id_state : m_being_expanded_states)
                     {
-                        auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
-                        if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
+                        if (id_state.second != min_edge_ptr->parent_state_ptr)
                         {
-                            // state_to_expand_found = false;
-                            min_edge_ptr = NULL;
-                            break;
+                            auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                            if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
+                            {
+                                min_edge_ptr = NULL;
+                                break;
+                            }
                         }
                     }
                 }
             }
+
+
+            // cout << "popped size: " << popped_edges.size() << endl;
+            // cout << "m_edge_open size: " << m_edge_open.size() << endl;
+            // cout << "min_edge_ptr: " << min_edge_ptr << endl;
 
             // Re add the popped states except curr state which will be expanded now
             for (auto& popped_edge_ptr : popped_edges)
@@ -611,8 +615,11 @@ int EPASE::improvePath(
             {
                 m_lock.unlock();
                 // Wait for recheck_flag_ to be set true;
-                while(!m_recheck_flag && !m_terminate){}
+                while(!m_recheck_flag && !m_terminate){
+                    // cout << "WAIT" << endl;
+                }
                 m_lock.lock();    
+                // cout << "CONT" << endl;
                 continue;
             }
 
@@ -632,6 +639,7 @@ int EPASE::improvePath(
             }
 
         }
+
 
         // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
         if (min_edge_ptr->action_idx == -1)
@@ -761,7 +769,11 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     }
     else // Real edge, evaluate and add proxy edges for child 
     {        
-        if (VERBOSE) edge_ptr->Print("Real expansion");
+        if (VERBOSE) 
+        {
+            edge_ptr->Print("Real expansion");
+            edge_ptr->parent_state_ptr->Print("state:");
+        }
 
         auto action_idx = edge_ptr->action_idx;
 
