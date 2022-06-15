@@ -737,6 +737,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 
         int num_succs;
         m_space->GetNumSuccs(edge_ptr->parent_state_ptr->state_id, num_succs);
+        m_num_state_expansions += 1;
 
         for (size_t sidx = 0; sidx < num_succs; ++sidx) 
         {
@@ -846,7 +847,7 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             if (it_state_be != m_being_expanded_states.end())
             {
                 m_being_expanded_states.erase(it_state_be);
-                m_num_state_expansions += 1;
+                // m_num_state_expansions += 1;
             }
         }
 
