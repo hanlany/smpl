@@ -162,6 +162,7 @@ public:
         std::vector<int>* succs,
         std::vector<int>* costs) override;
     void GetNumSuccs(int state_id, int& num_succs) override;
+    void GetCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs) override;
     void GetSucc(
         int state_id,
         int action_idx,
