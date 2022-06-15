@@ -545,7 +545,7 @@ int EPASE::improvePath(
 
             // cout << "eopen size: " << m_edge_open.size() << endl;
             // cout << "be size: " << m_being_expanded_states.size() << endl;
-            // cout << "Num state expansions: " << m_num_state_expansions << endl;
+            cout << "Num state expansions: " << m_num_state_expansions << endl;
 
             if (m_edge_open.empty() && m_being_expanded_states.empty())
             {
@@ -680,7 +680,7 @@ int EPASE::improvePath(
         }
 
         m_lock.lock();
-        ++elapsed_expansions;
+        elapsed_expansions = m_num_state_expansions; 
     }
 
     m_terminate = true;
