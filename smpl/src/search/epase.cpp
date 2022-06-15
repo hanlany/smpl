@@ -732,6 +732,112 @@ void EPASE::expandEdgeLoop(int thread_id)
     }    
 }
 
+
+void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
+{
+    if (VERBOSE) 
+    {
+        edge_ptr->Print("Real expansion");
+        edge_ptr->parent_state_ptr->Print("state:");
+    }
+
+    auto action_idx = edge_ptr->action_idx;
+
+    vector<int> succ_state_id, cost;
+
+    m_lock.unlock();
+    // Evaluate the edge
+    auto t_start = clock::now();
+    m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+    auto t_end = clock::now();
+    //********************
+    m_lock.lock();
+    // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
+
+    if (!succ_state_id.empty())
+    {
+        SearchState* succ_state = getSearchState(succ_state_id[0]);
+        reinitSearchState(succ_state);
+
+        edge_ptr->child_state_ptr = succ_state;
+        edge_ptr->cost = cost[0];
+        
+        if (!succ_state->is_visited)
+        {
+            int new_cost = edge_ptr->parent_state_ptr->g + cost[0];
+            if (new_cost < succ_state->g) 
+            {
+                succ_state->g = new_cost;
+                succ_state->bp = edge_ptr->parent_state_ptr;
+                if (succ_state->iteration_closed != m_iteration) 
+                {
+                    succ_state->f = computeKey(succ_state);
+
+                    // Insert poxy edge
+                    auto proxy_edge_ptr = new Edge();
+                    proxy_edge_ptr->parent_state_ptr = succ_state;
+                    auto edge_key = getEdgeKey(proxy_edge_ptr);
+                    auto it_edge = m_edge_map.find(edge_key); 
+
+
+                    if (it_edge == m_edge_map.end())
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("New edge ");
+                        proxy_edge_ptr->edge_id = edge_key;
+                        m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
+                    }
+                    else
+                    {
+                        delete proxy_edge_ptr;
+                        proxy_edge_ptr = it_edge->second;
+                    }
+
+                    proxy_edge_ptr->exp_priority = succ_state->f;
+                    
+                    if (m_edge_open.contains(proxy_edge_ptr))
+                    {
+                        if (VERBOSE) proxy_edge_ptr->Print("Proxy edge already in eopen ");
+                        m_edge_open.decrease(proxy_edge_ptr);
+                    }
+                    else
+                    {
+                        
+                        if (VERBOSE) proxy_edge_ptr->Print("Inserting proxy edge into eopen ");
+                
+                        m_edge_open.push(proxy_edge_ptr);
+                    }
+                } 
+            }
+        }
+        // else
+        // {
+        //     succ_state->Print("Ignoring closed state ");                
+        // }
+
+    }
+
+    edge_ptr->parent_state_ptr->num_expanded_successors += 1;
+
+    if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
+    {
+        edge_ptr->parent_state_ptr->being_expanded = false;
+        auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
+        if (it_state_be != m_being_expanded_states.end())
+        {
+            m_being_expanded_states.erase(it_state_be);
+            // m_num_state_expansions += 1;
+        }
+    }
+
+    if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
+    {
+        edge_ptr->parent_state_ptr->Print();
+        throw runtime_error("Number of expanded edges cannot be greater than number of successors");
+    }
+
+    m_recheck_flag = true;    
+}
+
 void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
 {
     m_lock.lock();
@@ -745,13 +851,34 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
     {       
         if (VERBOSE) edge_ptr->Print("Proxy expansion");
 
-        int num_succs;
-        m_space->GetNumSuccs(edge_ptr->parent_state_ptr->state_id, num_succs);
+        // int num_succs;
+        // m_space->GetNumSuccs(edge_ptr->parent_state_ptr->state_id, num_succs);
+        vector<int> cheap_succs;
+        vector<int> expensive_succs;
+
+        m_space->GetCheapExpensiveSuccsIdxs(edge_ptr->parent_state_ptr->state_id, cheap_succs, expensive_succs);
+
         m_num_state_expansions += 1;
 
-        for (size_t sidx = 0; sidx < num_succs; ++sidx) 
+        for (auto sidx: cheap_succs)
         {
+            auto edge_ptr_real = new Edge();
+            edge_ptr_real->action_idx = sidx;
+            edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
+            edge_ptr_real->exp_priority = edge_ptr->exp_priority;
+            edge_ptr_real->edge_id = getEdgeKey(edge_ptr_real);
+            m_edge_map.insert(make_pair(edge_ptr_real->edge_id, edge_ptr_real));
 
+            if (VERBOSE) edge_ptr_real->Print("Inserting real edge into eopen ");
+
+            state_ptr->num_successors+=1;
+
+            expandEdgeReal(edge_ptr_real, thread_id);
+
+        }
+
+        for (auto sidx: expensive_succs) 
+        {
             auto edge_ptr_real = new Edge();
             edge_ptr_real->action_idx = sidx;
             edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
@@ -766,114 +893,12 @@ void EPASE::expandEdge(EdgePtrType edge_ptr, int thread_id)
             m_edge_open.push(edge_ptr_real);
         }
 
+
         // num_proxy_expansions_++; 
         m_recheck_flag = true;
     }
     else // Real edge, evaluate and add proxy edges for child 
-    {        
-        if (VERBOSE) 
-        {
-            edge_ptr->Print("Real expansion");
-            edge_ptr->parent_state_ptr->Print("state:");
-        }
-
-        auto action_idx = edge_ptr->action_idx;
-
-        vector<int> succ_state_id, cost;
-
-        m_lock.unlock();
-        // Evaluate the edge
-        auto t_start = clock::now();
-        m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
-        auto t_end = clock::now();
-        //********************
-        m_lock.lock();
-        // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
-
-        if (!succ_state_id.empty())
-        {
-            SearchState* succ_state = getSearchState(succ_state_id[0]);
-            reinitSearchState(succ_state);
-
-            edge_ptr->child_state_ptr = succ_state;
-            edge_ptr->cost = cost[0];
-            
-            if (!succ_state->is_visited)
-            {
-                int new_cost = edge_ptr->parent_state_ptr->g + cost[0];
-                if (new_cost < succ_state->g) 
-                {
-                    succ_state->g = new_cost;
-                    succ_state->bp = edge_ptr->parent_state_ptr;
-                    if (succ_state->iteration_closed != m_iteration) 
-                    {
-                        succ_state->f = computeKey(succ_state);
-
-                        // Insert poxy edge
-                        auto proxy_edge_ptr = new Edge();
-                        proxy_edge_ptr->parent_state_ptr = succ_state;
-                        auto edge_key = getEdgeKey(proxy_edge_ptr);
-                        auto it_edge = m_edge_map.find(edge_key); 
-
-
-                        if (it_edge == m_edge_map.end())
-                        {
-                            if (VERBOSE) proxy_edge_ptr->Print("New edge ");
-                            proxy_edge_ptr->edge_id = edge_key;
-                            m_edge_map.insert(make_pair(edge_key, proxy_edge_ptr));
-                        }
-                        else
-                        {
-                            delete proxy_edge_ptr;
-                            proxy_edge_ptr = it_edge->second;
-                        }
-
-                        proxy_edge_ptr->exp_priority = succ_state->f;
-                        
-                        if (m_edge_open.contains(proxy_edge_ptr))
-                        {
-                            if (VERBOSE) proxy_edge_ptr->Print("Proxy edge already in eopen ");
-                            m_edge_open.decrease(proxy_edge_ptr);
-                        }
-                        else
-                        {
-                            
-                            if (VERBOSE) proxy_edge_ptr->Print("Inserting proxy edge into eopen ");
-                    
-                            m_edge_open.push(proxy_edge_ptr);
-                        }
-                    } 
-                }
-            }
-            // else
-            // {
-            //     succ_state->Print("Ignoring closed state ");                
-            // }
-
-        }
-
-        edge_ptr->parent_state_ptr->num_expanded_successors += 1;
-
-        if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
-        {
-            edge_ptr->parent_state_ptr->being_expanded = false;
-            auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
-            if (it_state_be != m_being_expanded_states.end())
-            {
-                m_being_expanded_states.erase(it_state_be);
-                // m_num_state_expansions += 1;
-            }
-        }
-
-        if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
-        {
-            edge_ptr->parent_state_ptr->Print();
-            throw runtime_error("Number of expanded edges cannot be greater than number of successors");
-        }
-
-        m_recheck_flag = true;
-
-    }    
+        expandEdgeReal(edge_ptr, thread_id);
 
     m_lock.unlock();
     // getchar();

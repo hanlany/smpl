@@ -331,6 +331,7 @@ private:
         clock::duration& elapsed_time);
 
     void expandEdgeLoop(int thread_id);
+    void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
     void expandEdge(EdgePtrType edge_ptr, int thread_id);
 
     void recomputeHeuristics();
