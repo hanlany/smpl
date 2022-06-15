@@ -337,7 +337,7 @@ bool ManipLatticeActionSpace::apply(
     double goal_dist, start_dist;
     std::tie(start_dist, goal_dist) = getStartGoalDistances(parent, tidx);
 
-    (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
+    (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions, tidx);
 
     return true;
 }
@@ -369,7 +369,8 @@ bool ManipLatticeActionSpace::getAction(
     double goal_dist,
     double start_dist,
     const MotionPrimitive& mp,
-    std::vector<Action>& actions)
+    std::vector<Action>& actions,
+    int tidx)
 {
     if (!mprimActive(start_dist, goal_dist, mp.type)) {
         return false;
@@ -396,7 +397,8 @@ bool ManipLatticeActionSpace::getAction(
                 goal_pose,
                 goal_dist,
                 ik_option::RESTRICT_XYZ,
-                actions);
+                actions,
+                tidx);
     }
     case MotionPrimitive::SNAP_TO_XYZ:
     {
@@ -405,7 +407,8 @@ bool ManipLatticeActionSpace::getAction(
                 goal_pose,
                 goal_dist,
                 ik_option::RESTRICT_RPY,
-                actions);
+                actions,
+                tidx);
     }
     case MotionPrimitive::SNAP_TO_XYZ_RPY:
     {
@@ -415,7 +418,8 @@ bool ManipLatticeActionSpace::getAction(
                     goal_pose,
                     goal_dist,
                     ik_option::UNRESTRICTED,
-                    actions);
+                    actions,
+                    tidx);
         }
 
         // goal is 7dof; instead of computing IK, use the goal itself as the IK
@@ -454,7 +458,8 @@ bool ManipLatticeActionSpace::computeIkAction(
     const Affine3& goal,
     double dist_to_goal,
     ik_option::IkOption option,
-    std::vector<Action>& actions)
+    std::vector<Action>& actions,
+    int tidx)
 {
     if (!m_ik_iface) {
         return false;
@@ -463,7 +468,7 @@ bool ManipLatticeActionSpace::computeIkAction(
     if (m_use_multiple_ik_solutions) {
         //get actions for multiple ik solutions
         std::vector<RobotState> solutions;
-        if (!m_ik_iface->computeIK(goal, state, solutions, option)) {
+        if (!m_ik_iface->computeIK(goal, state, solutions, tidx, option)) {
             return false;
         }
         for (auto& solution : solutions) {
@@ -473,7 +478,7 @@ bool ManipLatticeActionSpace::computeIkAction(
     } else {
         //get single action for single ik solution
         RobotState ik_sol;
-        if (!m_ik_iface->computeIK(goal, state, ik_sol)) {
+        if (!m_ik_iface->computeIK(goal, state, ik_sol, tidx)) {
             return false;
         }
 

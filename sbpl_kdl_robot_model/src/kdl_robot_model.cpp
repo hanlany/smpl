@@ -146,10 +146,12 @@ bool Init(
     }
 
     // FK solver
-    model->m_fk_solver = make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain);
+    for (int tidx=0; tidx < num_threads; tidx++)
+        model->m_fk_solver_vec.emplace_back(make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain));
 
     // IK Velocity solver
-    model->m_ik_vel_solver = make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain);
+    for (int tidx=0; tidx < num_threads; tidx++)    
+        model->m_ik_vel_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain));
 
     // IK solver
     KDL::JntArray q_min(model->jointVariableCount());
@@ -166,14 +168,17 @@ bool Init(
 
     model->m_max_iterations = 200;
     model->m_kdl_eps = 0.001;
-    model->m_ik_solver = make_unique<KDL::ChainIkSolverPos_NR_JL>(
+    for (int tidx=0; tidx < num_threads; tidx++)    
+    {
+        model->m_ik_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverPos_NR_JL>(
             model->m_chain,
             q_min,
             q_max,
-            *model->m_fk_solver,
-            *model->m_ik_vel_solver,
+            *model->m_fk_solver_vec[tidx],
+            *model->m_ik_vel_solver_vec[tidx],
             model->m_max_iterations,
-            model->m_kdl_eps);
+            model->m_kdl_eps));
+    }
 
     model->m_jnt_pos_in.resize(model->m_chain.getNrOfJoints());
     model->m_jnt_pos_out.resize(model->m_chain.getNrOfJoints());
@@ -256,7 +261,7 @@ bool KDLRobotModel::computeIKSearch(
                     this->m_search_discretization);
 
     while (loop_time < this->m_timeout) {
-        if (m_ik_solver->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) >= 0) {
+        if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) >= 0) {
             NormalizeAngles(this, &m_jnt_pos_out);
             solution.resize(start.size());
             for (size_t i = 0; i < solution.size(); ++i) {
@@ -330,7 +335,7 @@ bool KDLRobotModel::computeFastIK(
     // must be normalized for CartToJntSearch
     NormalizeAngles(this, &m_jnt_pos_in);
 
-    if (m_ik_solver->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) < 0) {
+    if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) < 0) {
         return false;
     }
 

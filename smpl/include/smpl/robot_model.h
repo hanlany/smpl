@@ -132,6 +132,12 @@ public:
         const RobotState& start,
         RobotState& solution,
         ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+    virtual bool computeIK(
+        const Affine3& pose,
+        const RobotState& start,
+        RobotState& solution,
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
 
     /// \brief Compute multiple inverse kinematic solutions.
     virtual bool computeIK(
@@ -139,6 +145,13 @@ public:
         const RobotState& start,
         std::vector<RobotState>& solutions,
         ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+    virtual bool computeIK(
+        const Affine3& pose,
+        const RobotState& start,
+        std::vector<RobotState>& solutions,
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+
 };
 
 class RedundantManipulatorInterface : public virtual RobotModel
