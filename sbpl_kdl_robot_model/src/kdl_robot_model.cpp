@@ -168,6 +168,10 @@ bool Init(
 
     model->m_max_iterations = 200;
     model->m_kdl_eps = 0.001;
+
+    model->m_jnt_pos_in_vec.resize(num_threads);
+    model->m_jnt_pos_out_vec.resize(num_threads);
+
     for (int tidx=0; tidx < num_threads; tidx++)    
     {
         model->m_ik_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverPos_NR_JL>(
@@ -178,10 +182,11 @@ bool Init(
             *model->m_ik_vel_solver_vec[tidx],
             model->m_max_iterations,
             model->m_kdl_eps));
+
+        model->m_jnt_pos_in_vec[tidx].resize(model->m_chain.getNrOfJoints());
+        model->m_jnt_pos_out_vec[tidx].resize(model->m_chain.getNrOfJoints());
     }
 
-    model->m_jnt_pos_in.resize(model->m_chain.getNrOfJoints());
-    model->m_jnt_pos_out.resize(model->m_chain.getNrOfJoints());
     model->m_free_angle = free_angle;
     model->m_search_discretization = 0.02;
     model->m_timeout = 0.005;
@@ -241,13 +246,13 @@ bool KDLRobotModel::computeIKSearch(
 
     // seed configuration
     for (size_t i = 0; i < start.size(); i++) {
-        m_jnt_pos_in(i) = start[i];
+        m_jnt_pos_in_vec[tidx](i) = start[i];
     }
 
     // must be normalized for CartToJntSearch
-    NormalizeAngles(this, &m_jnt_pos_in);
+    NormalizeAngles(this, &m_jnt_pos_in_vec[tidx]);
 
-    auto initial_guess = m_jnt_pos_in(m_free_angle);
+    auto initial_guess = m_jnt_pos_in_vec[tidx](m_free_angle);
 
     auto start_time = smpl::clock::now();
     auto loop_time = 0.0;
@@ -261,19 +266,19 @@ bool KDLRobotModel::computeIKSearch(
                     this->m_search_discretization);
 
     while (loop_time < this->m_timeout) {
-        if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) >= 0) {
-            NormalizeAngles(this, &m_jnt_pos_out);
+        if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) >= 0) {
+            NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
             solution.resize(start.size());
             for (size_t i = 0; i < solution.size(); ++i) {
-                solution[i] = m_jnt_pos_out(i);
+                solution[i] = m_jnt_pos_out_vec[tidx](i);
             }
             return true;
         }
         if (!getCount(count, num_positive_increments, -num_negative_increments)) {
             return false;
         }
-        m_jnt_pos_in(m_free_angle) = initial_guess + this->m_search_discretization * count;
-        ROS_DEBUG("%d, %f", count, m_jnt_pos_in(m_free_angle));
+        m_jnt_pos_in_vec[tidx](m_free_angle) = initial_guess + this->m_search_discretization * count;
+        ROS_DEBUG("%d, %f", count, m_jnt_pos_in_vec[tidx](m_free_angle));
         loop_time = to_seconds(smpl::clock::now() - start_time);
     }
 
@@ -329,21 +334,21 @@ bool KDLRobotModel::computeFastIK(
 
     // seed configuration
     for (size_t i = 0; i < start.size(); i++) {
-        m_jnt_pos_in(i) = start[i];
+        m_jnt_pos_in_vec[tidx](i) = start[i];
     }
 
     // must be normalized for CartToJntSearch
-    NormalizeAngles(this, &m_jnt_pos_in);
+    NormalizeAngles(this, &m_jnt_pos_in_vec[tidx]);
 
-    if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) < 0) {
+    if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) < 0) {
         return false;
     }
 
-    NormalizeAngles(this, &m_jnt_pos_out);
+    NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
 
     solution.resize(start.size());
     for (size_t i = 0; i < solution.size(); ++i) {
-        solution[i] = m_jnt_pos_out(i);
+        solution[i] = m_jnt_pos_out_vec[tidx](i);
     }
 
     return true;

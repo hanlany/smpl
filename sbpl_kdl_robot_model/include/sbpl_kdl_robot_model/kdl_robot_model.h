@@ -154,6 +154,9 @@ public:
     // temporary storage
     KDL::JntArray m_jnt_pos_in;
     KDL::JntArray m_jnt_pos_out;
+    // for multi-threaded IK
+    std::vector<KDL::JntArray> m_jnt_pos_in_vec;
+    std::vector<KDL::JntArray> m_jnt_pos_out_vec;
 
     // ik search configuration
     int m_free_angle;
