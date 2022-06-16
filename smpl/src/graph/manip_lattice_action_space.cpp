@@ -359,6 +359,28 @@ bool ManipLatticeActionSpace::apply(
 
     return true;
 }
+
+bool ManipLatticeActionSpace::apply(
+    const RobotState& parent,
+    std::vector<Action>& actions,
+    std::vector<int> action_idx_vec,
+    int tidx)
+{
+    double goal_dist, start_dist;
+
+    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent);
+
+
+    for (auto& action_idx : action_idx_vec) {
+        (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
+    }
+
+    if (actions.empty()) {
+        SMPL_WARN_ONCE("No motion primitives specified");
+    }
+
+    return true;
+}
 void ManipLatticeActionSpace::getNumSuccs(int& num_succs)
 {
     num_succs = m_mprims.size();

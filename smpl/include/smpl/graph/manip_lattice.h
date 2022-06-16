@@ -169,6 +169,12 @@ public:
         std::vector<int>* succs,
         std::vector<int>* costs,
         int thread_id) override;    
+    void GetSuccs(
+        int state_id,
+        std::vector<int> action_idx_vec,
+        std::vector<int>* succs,
+        std::vector<int>* costs,
+        int thread_id) override;    
     void PrintState(int state_id, bool verbose, FILE* fout = nullptr) override;
     void GetPreds(
         int state_id,

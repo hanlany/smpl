@@ -199,11 +199,11 @@ void ManipLattice::GetSuccs(
     std::vector<int>* succs,
     std::vector<int>* costs)
 {
-    assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
-    assert(succs && costs && "successor buffer is null");
-    assert(m_actions && "action space is uninitialized");
+    // assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
+    // assert(succs && costs && "successor buffer is null");
+    // assert(m_actions && "action space is uninitialized");
 
-    SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "expanding state %d", state_id);
+    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "expanding state %d", state_id);
 
     // goal state should be absorbing
     if (state_id == m_goal_state_id) {
@@ -212,15 +212,15 @@ void ManipLattice::GetSuccs(
 
     ManipLatticeState* parent_entry = m_states[state_id];
 
-    assert(parent_entry);
-    assert(parent_entry->coord.size() >= robot()->jointVariableCount());
+    // assert(parent_entry);
+    // assert(parent_entry->coord.size() >= robot()->jointVariableCount());
 
     // log expanded state details
-    SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
-    SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
 
-    auto* vis_name = "expansion";
-    SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
+    // auto* vis_name = "expansion";
+    // SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
 
     int goal_succ_count = 0;
 
@@ -230,15 +230,15 @@ void ManipLattice::GetSuccs(
         return;
     }
 
-    SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
+    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
 
     // check actions for validity
     RobotCoord succ_coord(robot()->jointVariableCount(), 0);
     for (size_t i = 0; i < actions.size(); ++i) {
         auto& action = actions[i];
 
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
         if (!checkAction(parent_entry->state, action)) {
             continue;
@@ -269,16 +269,16 @@ void ManipLattice::GetSuccs(
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
 
         // log successor details
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      succ: %zu", i);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        id: %5i", succ_state_id);
-        SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        coord: " << succ_coord);
-        SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      succ: %zu", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        id: %5i", succ_state_id);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        coord: " << succ_coord);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
     }
 
-    if (goal_succ_count > 0) {
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
-    }
+    // if (goal_succ_count > 0) {
+    //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
+    // }
 }
 
 void ManipLattice::GetNumSuccs(int state_id, int& num_succs)
@@ -301,11 +301,11 @@ void ManipLattice::GetSucc(
     std::vector<int>* costs,
     int tidx)
 {
-    assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
-    assert(succs && costs && "successor buffer is null");
-    assert(m_actions && "action space is uninitialized");
+    // assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
+    // assert(succs && costs && "successor buffer is null");
+    // assert(m_actions && "action space is uninitialized");
 
-    SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "expanding state %d", state_id);
+    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "expanding state %d", state_id);
 
     // goal state should be absorbing
     if (state_id == m_goal_state_id) {
@@ -314,15 +314,15 @@ void ManipLattice::GetSucc(
 
     ManipLatticeState* parent_entry = m_states[state_id];
 
-    assert(parent_entry);
-    assert(parent_entry->coord.size() >= robot()->jointVariableCount());
+    // assert(parent_entry);
+    // assert(parent_entry->coord.size() >= robot()->jointVariableCount());
 
     // log expanded state details
-    SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
-    SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
 
-    auto* vis_name = "expansion";
-    SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
+    // auto* vis_name = "expansion";
+    // SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
 
     int goal_succ_count = 0;
 
@@ -332,15 +332,15 @@ void ManipLattice::GetSucc(
         return;
     }
 
-    SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
+    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
 
     // check actions for validity
     RobotCoord succ_coord(robot()->jointVariableCount(), 0);
     for (size_t i = 0; i < actions.size(); ++i) {
         auto& action = actions[i];
 
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
         if (!checkAction(parent_entry->state, action, tidx)) {
             continue;
@@ -373,16 +373,128 @@ void ManipLattice::GetSucc(
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
 
         // log successor details
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      succ: %zu", i);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        id: %5i", succ_state_id);
-        SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        coord: " << succ_coord);
-        SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      succ: %zu", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        id: %5i", succ_state_id);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        coord: " << succ_coord);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
     }
 
-    if (goal_succ_count > 0) {
-        SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
+    // if (goal_succ_count > 0) {
+    //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
+    // }
+
+}
+
+void ManipLattice::GetSuccs(
+    int state_id,
+    std::vector<int> action_idx_vec,
+    std::vector<int>* succs,
+    std::vector<int>* costs,
+    int tidx)
+{
+
+    // std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+    // auto t_start = clock::now();
+    // assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
+    // assert(succs && costs && "successor buffer is null");
+    // assert(m_actions && "action space is uninitialized");
+
+    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "expanding state %d", state_id);
+
+    // goal state should be absorbing
+    if (state_id == m_goal_state_id) {
+        return;
     }
+
+    ManipLatticeState* parent_entry = m_states[state_id];
+
+    assert(parent_entry);
+    assert(parent_entry->coord.size() >= robot()->jointVariableCount());
+
+    // log expanded state details
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
+    // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
+
+    // auto* vis_name = "expansion";
+    // SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
+
+    int goal_succ_count = 0;
+
+    std::vector<Action> actions;
+    if (!m_actions->apply(parent_entry->state, actions, action_idx_vec, tidx)) {
+        SMPL_WARN("Failed to get actions");
+        return;
+    }
+
+
+    // SMPL_INFO_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
+
+
+    // check actions for validity
+    RobotCoord succ_coord(robot()->jointVariableCount(), 0);
+
+
+    // getchar();
+    if (actions.empty())
+        return;
+
+
+    // SMPL_INFO_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
+
+    for (size_t i = 0; i < actions.size(); ++i) 
+    {
+
+        auto& action = actions[i];
+        // std::cout << "type: " << action.type() << std::endl;
+
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
+
+        if (!checkAction(parent_entry->state, action)) {
+            continue;
+        }
+
+        // compute destination coords
+        stateToCoord(action.back(), succ_coord);
+
+        // get the successor
+
+        // check if hash entry already exists, if not then create one
+        int succ_state_id = getOrCreateState(succ_coord, action.back());
+        ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
+
+        // check if this state meets the goal criteria
+        auto is_goal_succ = isGoal(action.back());
+        if (is_goal_succ) {
+            // update goal state
+            ++goal_succ_count;
+        }
+
+        // put successor on successor list with the proper cost
+        if (is_goal_succ) {
+            succs->push_back(m_goal_state_id);
+        } else {
+            succs->push_back(succ_state_id);
+        }
+        costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
+
+        // log successor details
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      succ: %zu", i);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        id: %5i", succ_state_id);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        coord: " << succ_coord);
+        // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
+        // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
+   
+
+    }
+
+    // if (goal_succ_count > 0) {
+    //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
+    // }
+
+    // std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+
 
 }
 
