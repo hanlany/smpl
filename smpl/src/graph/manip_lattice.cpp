@@ -451,7 +451,7 @@ void ManipLattice::GetSuccs(
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
-        if (!checkAction(parent_entry->state, action)) {
+        if (!checkAction(parent_entry->state, action, tidx)) {
             continue;
         }
 
@@ -461,11 +461,13 @@ void ManipLattice::GetSuccs(
         // get the successor
 
         // check if hash entry already exists, if not then create one
+        m_lock.lock();   
         int succ_state_id = getOrCreateState(succ_coord, action.back());
         ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
+        m_lock.unlock();   
 
         // check if this state meets the goal criteria
-        auto is_goal_succ = isGoal(action.back());
+        auto is_goal_succ = isGoal(action.back(), tidx);
         if (is_goal_succ) {
             // update goal state
             ++goal_succ_count;
