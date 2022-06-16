@@ -288,10 +288,14 @@ void ManipLattice::GetNumSuccs(int state_id, int& num_succs)
 
 void ManipLattice::GetCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs)
 {
-    for (int i = 3; i < 25; ++i)
+    // for (int i = 3; i < 25; ++i)
+    //     cheap_succs.emplace_back(i);
+    // for (int i = 0; i < 3; ++i)
+    //     expensive_succs.emplace_back(i);    
+
+    for (int i = 0; i < 25; ++i)
         cheap_succs.emplace_back(i);
-    for (int i = 0; i < 3; ++i)
-        expensive_succs.emplace_back(i);    
+
 }
 
 void ManipLattice::GetSucc(
@@ -395,7 +399,6 @@ void ManipLattice::GetSuccs(
 {
 
     // std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
-    // auto t_start = clock::now();
     // assert(state_id >= 0 && state_id < m_states.size() && "state id out of bounds");
     // assert(succs && costs && "successor buffer is null");
     // assert(m_actions && "action space is uninitialized");
@@ -495,7 +498,6 @@ void ManipLattice::GetSuccs(
     //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
     // }
 
-    // std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
 
 
 }

@@ -15,3 +15,4 @@ planning:
   rpy_snap_dist_thresh: 0.0
   xyzrpy_snap_dist_thresh: 0.0
   short_dist_mprims_thresh: 0.4
+  
