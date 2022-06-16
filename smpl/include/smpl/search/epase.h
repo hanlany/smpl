@@ -228,12 +228,15 @@ private:
         double cost = -1;
         mutable std::mutex lock; 
     
-        void Print(std::string str = "")
+        void Print(std::string str = "", bool print_parent = false)
         {
-            std::cout << str << "id: " << edge_id << " | parent: " << parent_state_ptr->state_id << " | action_idx: " << action_idx;
+            std::cout << str;
+            if (!str.empty()) std::cout << " ";
+            std::cout << "id: " << edge_id << " | parent: " << parent_state_ptr->state_id << " | action_idx: " << action_idx;
             if (child_state_ptr) std::cout << " | child: " << child_state_ptr->state_id;
             std::cout << " | exp_priority: " << exp_priority;
             std::cout << std::endl;
+            if (print_parent) parent_state_ptr->Print("Parent state ");
         };
 
     };
@@ -332,7 +335,8 @@ private:
 
     void expandEdgeLoop(int thread_id);
     void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
-    void expandEdge(EdgePtrType edge_ptr, int thread_id);
+    void expandEdgesReal(EdgePtrType& state_ptr, std::vector<int>& action_idx_vec, int thread_id);
+    void expandEdge(EdgePtrType& edge_ptr, int thread_id);
 
     void recomputeHeuristics();
     void reorderOpen();
