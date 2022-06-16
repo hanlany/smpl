@@ -735,11 +735,7 @@ void EPASE::expandEdgeLoop(int thread_id)
 
 void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
 {
-    if (VERBOSE) 
-    {
-        edge_ptr->Print("Real expansion");
-        edge_ptr->parent_state_ptr->Print("state:");
-    }
+    if (VERBOSE) edge_ptr->Print("Real expansion", true);
 
     auto action_idx = edge_ptr->action_idx;
 

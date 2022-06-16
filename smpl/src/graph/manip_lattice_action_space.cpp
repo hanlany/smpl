@@ -328,19 +328,6 @@ auto ManipLatticeActionSpace::getStartGoalDistances(const RobotState& state, int
     }
 }
 
-bool ManipLatticeActionSpace::apply(
-    const RobotState& parent,
-    std::vector<Action>& actions,
-    int action_idx,
-    int tidx)
-{
-    double goal_dist, start_dist;
-    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent, tidx);
-
-    (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions, tidx);
-
-    return true;
-}
 
 bool ManipLatticeActionSpace::apply(
     const RobotState& parent,
@@ -363,16 +350,28 @@ bool ManipLatticeActionSpace::apply(
 bool ManipLatticeActionSpace::apply(
     const RobotState& parent,
     std::vector<Action>& actions,
+    int action_idx,
+    int tidx)
+{
+    double goal_dist, start_dist;
+    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent, tidx);
+
+    (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions, tidx);
+
+    return true;
+}
+
+bool ManipLatticeActionSpace::apply(
+    const RobotState& parent,
+    std::vector<Action>& actions,
     std::vector<int> action_idx_vec,
     int tidx)
 {
     double goal_dist, start_dist;
-
-    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent);
-
+    std::tie(start_dist, goal_dist) = getStartGoalDistances(parent, tidx);
 
     for (auto& action_idx : action_idx_vec) {
-        (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions);
+        (void)getAction(parent, goal_dist, start_dist, m_mprims[action_idx], actions, tidx);
     }
 
     if (actions.empty()) {
