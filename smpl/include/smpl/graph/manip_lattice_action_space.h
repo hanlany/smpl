@@ -90,8 +90,9 @@ public:
 
     /// \name Required Public Functions from ActionSpace
     ///@{
-    bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) override;
     bool apply(const RobotState& parent, std::vector<Action>& actions) override;
+    bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) override;
+    bool apply(const RobotState& parent, std::vector<Action>& actions, std::vector<int> action_idx_vec, int tidx) override;
     ///@}
 
     void getNumSuccs(int& num_succs) override;

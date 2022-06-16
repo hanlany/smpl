@@ -59,8 +59,9 @@ public:
     /// source state. The motion between waypoints will be checked via the set
     /// CollisionChecker's isStateToStateValid function during a search.
     virtual void getNumSuccs(int& num_succs) = 0;
-    virtual bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) = 0;
     virtual bool apply(const RobotState& parent, std::vector<Action>& actions) = 0;
+    virtual bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) = 0;
+    virtual bool apply(const RobotState& parent, std::vector<Action>& actions, std::vector<int> action_idx, int tidx) = 0;
 
     virtual void updateStart(const RobotState& state) { }
     virtual void updateGoal(const GoalConstraint& goal) { }
