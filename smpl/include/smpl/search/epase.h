@@ -107,6 +107,8 @@ public:
     EPASE(DiscreteSpaceInformation* space, Heuristic* heuristic);
     ~EPASE();
 
+    template<typename T> bool isFutureReady(T& future){return future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;};
+
     void allowPartialSolutions(bool enabled) {
         m_allow_partial_solutions = enabled;
     }
