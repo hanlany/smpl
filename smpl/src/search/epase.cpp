@@ -632,11 +632,17 @@ int EPASE::improvePath(
             // path to goal found
             if (min_edge_ptr->parent_state_ptr->f >= goal_state->f || min_edge_ptr->parent_state_ptr == goal_state) {
                 SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
+                m_terminate = true;
+                m_recheck_flag = true;
+                m_lock.unlock();
                 return SUCCESS;
             }
 
             if (timedOut(elapsed_expansions, elapsed_time)) {
                 SMPL_DEBUG_NAMED(SLOG, "Ran out of time");
+                m_terminate = true;
+                m_recheck_flag = true;
+                m_lock.unlock();
                 return TIMED_OUT;
             }
 
@@ -1080,7 +1086,27 @@ void EPASE::extractPath(
 
 void EPASE::exit()
 {
+    bool all_expansion_threads_terminated = false;
+    while (!all_expansion_threads_terminated)
+    {
+        all_expansion_threads_terminated = true;
+        for (int fut_idx = 1; fut_idx < m_edge_expansion_futures.size(); ++fut_idx)
+        {
+            if (!isFutureReady(m_edge_expansion_futures[fut_idx]))
+            {
+                all_expansion_threads_terminated = false;
+                break;
+            }
+            else
+                cout << "thread exited: " << fut_idx << endl;
+        }
+    }
+    m_edge_expansion_futures.clear();
 
+    while (!m_edge_open.empty())
+        m_edge_open.pop();
+    
+    cout << "Exiting" << endl;
 }
 
 
