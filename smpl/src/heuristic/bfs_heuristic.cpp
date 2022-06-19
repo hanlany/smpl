@@ -193,6 +193,23 @@ Extension* BfsHeuristic::getExtension(size_t class_code)
     return nullptr;
 }
 
+int BfsHeuristic::GetGoalHeuristic(int state_id, int tidx)
+{
+    if (m_pp == NULL) {
+        return 0;
+    }
+
+    Vector3 p;
+    if (!m_pp->projectToPoint(state_id, p, tidx)) {
+        return 0;
+    }
+
+    Eigen::Vector3i dp;
+    grid()->worldToGrid(p.x(), p.y(), p.z(), dp.x(), dp.y(), dp.z());
+
+    return getBfsCostToGoal(*m_bfs, dp.x(), dp.y(), dp.z());
+}
+
 int BfsHeuristic::GetGoalHeuristic(int state_id)
 {
     if (m_pp == NULL) {

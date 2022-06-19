@@ -347,7 +347,7 @@ private:
 
     SearchState* getSearchState(int state_id);
     SearchState* createState(int state_id);
-    void reinitSearchState(SearchState* state);
+    void reinitSearchState(SearchState* state, int tidx);
 
     void extractPath(
         SearchState* to_state,
