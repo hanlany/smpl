@@ -96,6 +96,7 @@ public:
     ///@}
 
     void getNumSuccs(int& num_succs) override;
+    void getCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs) override;
 
 protected:
 
