@@ -283,9 +283,6 @@ private:
     double m_curr_eps;
     int m_iteration;
 
-    std::vector<int> m_succs;
-    std::vector<int> m_costs;
-
     int m_call_number;          // for lazy reinitialization of search states
     int m_last_start_state_id;  // for lazy reinitialization of the search tree
     int m_last_goal_state_id;   // for updating the search tree when the goal changes

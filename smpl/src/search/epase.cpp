@@ -201,6 +201,7 @@ int EPASE::replan(
     //         SMPL_DEBUG_NAMED(SLOG, "Begin new search iteration %d with epsilon = %0.3f", m_iteration, m_curr_eps);
     //     }
     err = improvePath(start_time, goal_state, num_expansions, elapsed_time);
+    exit();
     //     if (m_curr_eps == m_initial_eps) {
             m_expand_count_init += num_expansions;
             m_search_time_init += elapsed_time;
@@ -553,7 +554,6 @@ int EPASE::improvePath(
                 elapsed_time = now - start_time;
                 cout << "Goal Not Reached" << endl;   
                 m_lock.unlock();
-                exit();
                 return false;
             }
 
@@ -654,7 +654,7 @@ int EPASE::improvePath(
         m_lock.unlock();
 
 
-        if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
+        if (1) cout << "Num state expansions: " << m_num_state_expansions << endl;
 
         if (m_num_threads == 1)
         {
@@ -697,7 +697,6 @@ int EPASE::improvePath(
     auto now = clock::now();
     elapsed_time = now - start_time;
     m_lock.unlock();
-    exit();
     return EXHAUSTED_OPEN_LIST;
 }
 
