@@ -137,8 +137,8 @@ int EPASE::replan(
         m_incons.clear();
         ++m_call_number; // trigger state reinitializations
 
-        reinitSearchState(start_state);
-        reinitSearchState(goal_state);
+        reinitSearchState(start_state, 0);
+        reinitSearchState(goal_state, 0);
 
         start_state->g = 0;
         start_state->f = computeKey(start_state);
@@ -423,7 +423,7 @@ void EPASE::recomputeHeuristics()
 {
     for (SearchState* s : m_states) {
         if (s != NULL) {
-            s->h = m_heur->GetGoalHeuristic(s->state_id);
+            s->h = m_heur->GetGoalHeuristic(s->state_id, 0);
         }
     }
 }
@@ -758,7 +758,7 @@ void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
     if (!succ_state_id.empty())
     {
         SearchState* succ_state = getSearchState(succ_state_id[0]);
-        reinitSearchState(succ_state);
+        reinitSearchState(succ_state, thread_id);
 
         edge_ptr->child_state_ptr = succ_state;
         edge_ptr->cost = cost[0];
@@ -833,7 +833,7 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
     for (auto succ_idx = 0; succ_idx < succs.size(); ++succ_idx)
     {
         SearchState* succ_state = getSearchState(succs[succ_idx]);
-        reinitSearchState(succ_state);
+        reinitSearchState(succ_state, thread_id);
 
         auto edge_ptr_real = new Edge();
         edge_ptr_real->action_idx = action_idx_vec[succ_idx];
@@ -1056,12 +1056,12 @@ EPASE::SearchState* EPASE::createState(int state_id)
 }
 
 // Lazily (re)initialize a search state.
-void EPASE::reinitSearchState(SearchState* state)
+void EPASE::reinitSearchState(SearchState* state, int tidx)
 {
     if (state->call_number != m_call_number) {
         SMPL_DEBUG_NAMED(SELOG, "Reinitialize state %d", state->state_id);
         state->g = INFINITECOST;
-        state->h = m_heur->GetGoalHeuristic(state->state_id);
+        state->h = m_heur->GetGoalHeuristic(state->state_id, tidx);
         state->f = INFINITECOST;
         state->eg = INFINITECOST;
         state->iteration_closed = 0;

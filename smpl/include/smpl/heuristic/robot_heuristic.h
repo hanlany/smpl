@@ -79,6 +79,8 @@ public:
 
     /// \name Restate Required Public Functions from Heuristic
     ///@{
+    virtual int GetGoalHeuristic(int state_id, int tidx)
+    {SMPL_ERROR("Multi-threaded GetGoalHeuristic not implemented");};
     virtual int GetGoalHeuristic(int state_id) = 0;
     virtual int GetStartHeuristic(int state_id) = 0;
     virtual int GetFromToHeuristic(int from_id, int to_id) = 0;
