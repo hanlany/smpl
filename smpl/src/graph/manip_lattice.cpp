@@ -309,7 +309,9 @@ void ManipLattice::GetSucc(
         return;
     }
 
+    m_lock.lock();   
     ManipLatticeState* parent_entry = m_states[state_id];
+    m_lock.unlock();   
 
     // assert(parent_entry);
     // assert(parent_entry->coord.size() >= robot()->jointVariableCount());
@@ -403,7 +405,9 @@ void ManipLattice::GetSuccs(
         return;
     }
 
+    m_lock.lock();   
     ManipLatticeState* parent_entry = m_states[state_id];
+    m_lock.unlock();   
 
     assert(parent_entry);
     assert(parent_entry->coord.size() >= robot()->jointVariableCount());
@@ -664,7 +668,11 @@ bool ManipLattice::projectToPose(int state_id, Affine3& pose, int tidx)
         return true;
     }
 
-    pose = computePlanningFrameFK(m_states[state_id]->state, tidx);
+    m_lock.lock();   
+    auto state = m_states[state_id]->state;
+    m_lock.unlock();   
+
+    pose = computePlanningFrameFK(state, tidx);
     return true;
 }
 
