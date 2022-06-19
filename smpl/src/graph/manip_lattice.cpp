@@ -288,14 +288,7 @@ void ManipLattice::GetNumSuccs(int state_id, int& num_succs)
 
 void ManipLattice::GetCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs)
 {
-    // for (int i = 3; i < 25; ++i)
-    //     cheap_succs.emplace_back(i);
-    // for (int i = 0; i < 3; ++i)
-    //     expensive_succs.emplace_back(i);    
-
-    for (int i = 0; i < 25; ++i)
-        cheap_succs.emplace_back(i);
-
+    m_actions->getCheapExpensiveSuccsIdxs(state_id, cheap_succs, expensive_succs);
 }
 
 void ManipLattice::GetSucc(

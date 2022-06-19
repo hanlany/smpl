@@ -385,6 +385,17 @@ void ManipLatticeActionSpace::getNumSuccs(int& num_succs)
     num_succs = m_mprims.size();
 }
 
+void ManipLatticeActionSpace::getCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs)
+{
+    for (int idx = 0; idx < m_mprims.size(); idx++)
+    {
+        if ((m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ) || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_RPY) || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ_RPY))
+            expensive_succs.emplace_back(idx);
+        else
+            cheap_succs.emplace_back(idx);
+    }
+}
+
 bool ManipLatticeActionSpace::getAction(
     const RobotState& parent,
     double goal_dist,
