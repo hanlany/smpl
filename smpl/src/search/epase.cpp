@@ -818,13 +818,16 @@ void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
 void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, int thread_id)
 {
 
+    vector<int> costs;
+    vector<int> succs;
+
     m_lock.unlock();
-    m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &m_succs, &m_costs, thread_id);
+    m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
     m_lock.lock();
 
-    for (auto succ_idx = 0; succ_idx < m_succs.size(); ++succ_idx)
+    for (auto succ_idx = 0; succ_idx < succs.size(); ++succ_idx)
     {
-        SearchState* succ_state = getSearchState(m_succs[succ_idx]);
+        SearchState* succ_state = getSearchState(succs[succ_idx]);
         reinitSearchState(succ_state);
 
         auto edge_ptr_real = new Edge();
@@ -835,11 +838,11 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
         m_edge_map.insert(make_pair(edge_ptr_real->edge_id, edge_ptr_real));
 
         edge_ptr->child_state_ptr = succ_state;
-        edge_ptr->cost = m_costs[succ_idx];
+        edge_ptr->cost = costs[succ_idx];
         
         if (!succ_state->is_visited)
         {
-            int new_cost = edge_ptr->parent_state_ptr->g + m_costs[succ_idx];
+            int new_cost = edge_ptr->parent_state_ptr->g + costs[succ_idx];
             if (new_cost < succ_state->g) 
             {
                 succ_state->g = new_cost;
@@ -893,8 +896,6 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
 {
 
     m_lock.lock();
-    m_succs.clear();
-    m_costs.clear();
 
     if (VERBOSE) 
     {
