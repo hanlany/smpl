@@ -917,7 +917,6 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         m_space->GetCheapExpensiveSuccsIdxs(edge_ptr->parent_state_ptr->state_id, cheap_succs, expensive_succs);
         edge_ptr->parent_state_ptr->num_successors = cheap_succs.size() + expensive_succs.size();
 
-
         expandEdgesReal(edge_ptr, cheap_succs, thread_id);
         
         edge_ptr->parent_state_ptr->num_expanded_successors += cheap_succs.size();
