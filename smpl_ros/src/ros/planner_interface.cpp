@@ -851,7 +851,7 @@ bool PlannerInterface::solve(
     }
 
     postProcessPath(path);
-    SV_SHOW_INFO_NAMED("trajectory", makePathVisualization(path));
+    // SV_SHOW_INFO_NAMED("trajectory", makePathVisualization(path));
 
     SMPL_DEBUG_NAMED(PI_LOGGER, "smoothed path:");
     for (size_t pidx = 0; pidx < path.size(); ++pidx) {

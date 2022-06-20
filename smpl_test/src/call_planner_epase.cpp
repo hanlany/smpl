@@ -600,7 +600,7 @@ int main(int argc, char* argv[])
     }
 
 
-    SV_SHOW_INFO(grid.getDistanceFieldVisualization(0.2));
+    // SV_SHOW_INFO(grid.getDistanceFieldVisualization(0.2));
 
     SV_SHOW_INFO(cc.getCollisionRobotVisualization(0));
     SV_SHOW_INFO(cc.getCollisionWorldVisualization(0));
@@ -698,18 +698,23 @@ int main(int argc, char* argv[])
 
     ROS_INFO("Animate path");
 
-    // size_t pidx = 0;
-    // while (ros::ok()) {
-    //     auto& point = res.trajectory.joint_trajectory.points[pidx];
-    //     auto markers = cc.getCollisionRobotVisualization(0, point.positions);
-    //     for (auto& m : markers.markers) {
-    //         m.ns = "path_animation";
-    //     }
-    //     SV_SHOW_INFO(markers);
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    //     pidx++;
-    //     pidx %= res.trajectory.joint_trajectory.points.size();
-    // }
+    auto markers = cc.getCollisionWorldVisualization(0);
+    auto occupied_voxels = cc.getOccupiedVoxelsVisualization();
+    SV_SHOW_INFO(markers);
+    SV_SHOW_INFO(occupied_voxels);
+
+    size_t pidx = 0;
+    while (ros::ok()) {
+        auto& point = res.trajectory.joint_trajectory.points[pidx];
+        auto markers_robot = cc.getCollisionRobotVisualization(0, point.positions);
+        for (auto& m : markers.markers) {
+            m.ns = "path_animation";
+        }
+        SV_SHOW_INFO(markers_robot);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        pidx++;
+        pidx %= res.trajectory.joint_trajectory.points.size();
+    }
 
     return 0;
 }
