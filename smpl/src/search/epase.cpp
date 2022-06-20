@@ -660,7 +660,7 @@ int EPASE::improvePath(
         m_lock.unlock();
 
 
-        if (1) cout << "Num state expansions: " << m_num_state_expansions << endl;
+        if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
 
         if (m_num_threads == 1)
         {
@@ -1106,7 +1106,7 @@ void EPASE::exit()
     while (!m_edge_open.empty())
         m_edge_open.pop();
     
-    cout << "Exiting" << endl;
+    cout << "Epase exited" << endl;
 }
 
 
