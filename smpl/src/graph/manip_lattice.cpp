@@ -1259,7 +1259,8 @@ bool ManipLattice::extractPath(
                 }
 
                 stateToCoord(action.back(), succ_coord);
-                int succ_state_id = getHashEntry(succ_coord);
+                // int succ_state_id = getHashEntry(succ_coord);
+                int succ_state_id = getOrCreateState(succ_coord, action.back());
                 ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
                 assert(succ_entry);
 
