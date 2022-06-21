@@ -233,6 +233,7 @@ int EPASE::replan(
     cout << "Num edge evals: " << m_num_edge_evals << endl;
     cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
     cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
+    cout << "Edge find time: " << m_edge_find_time   << endl;
     cout << "*********************" << endl;
 
     return !SUCCESS;
@@ -517,6 +518,7 @@ void EPASE::initialize()
     m_recheck_flag = true;
     m_num_state_expansions = 0;
     m_num_edge_evals = 0;
+    m_edge_find_time = 0.0;
     
     m_edge_expansion_vec.clear();
     m_edge_expansion_vec.resize(m_num_threads, NULL);
@@ -635,6 +637,7 @@ int EPASE::improvePath(
                 continue;
             }
 
+
             // if (!terminate_)
             m_recheck_flag = false;
             
@@ -666,6 +669,9 @@ int EPASE::improvePath(
             min_edge_ptr->parent_state_ptr->being_expanded = true;
             m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
         }
+
+        auto now_edge_found = clock::now(); 
+        m_edge_find_time += to_seconds(now_edge_found - now);
 
         m_lock.unlock();
 
