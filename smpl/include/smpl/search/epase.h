@@ -303,6 +303,8 @@ private:
     // Multi-threading members
     int m_num_threads;
     int m_num_state_expansions;
+    int m_num_edge_evals;
+    
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::future<void>> m_edge_expansion_futures;
