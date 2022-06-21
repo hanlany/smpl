@@ -301,10 +301,11 @@ private:
     std::unordered_map<size_t, StatePtrType> m_being_expanded_states;
 
     // Multi-threading members
-    int m_num_threads;
-    int m_num_state_expansions;
-    int m_num_edge_evals;
-    
+    std::atomic<int> m_num_threads;
+    std::atomic<int> m_num_state_expansions;
+    std::atomic<int> m_num_edge_evals;
+    double m_edge_find_time;
+
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::future<void>> m_edge_expansion_futures;
