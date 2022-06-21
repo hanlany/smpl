@@ -305,9 +305,13 @@ private:
     int m_num_state_expansions;
     int m_num_edge_evals;
     int m_num_expand_calls;
-    
+    int m_num_cheap_expansions;
+    int m_num_exp_expansions;
+
     double m_edge_find_time;
     double m_expansions_time;
+    double m_cheap_expansions_time;
+    double m_exp_expansions_time;
 
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
