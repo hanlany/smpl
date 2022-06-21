@@ -142,6 +142,7 @@ public:
 
     KDL::Tree m_tree;
     KDL::Chain m_chain;
+    std::vector<KDL::Chain> m_chain_vec;
 
     std::vector<std::unique_ptr<KDL::ChainFkSolverPos_recursive>>    m_fk_solver_vec;
     std::vector<std::unique_ptr<KDL::ChainIkSolverVel_pinv>>         m_ik_vel_solver_vec;
