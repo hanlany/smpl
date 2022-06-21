@@ -145,13 +145,15 @@ bool Init(
         return false; // this shouldn't happen either
     }
 
+    model->m_chain_vec.resize(num_threads, model->m_chain);
+
     // FK solver
     for (int tidx=0; tidx < num_threads; tidx++)
-        model->m_fk_solver_vec.emplace_back(make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain));
+        model->m_fk_solver_vec.emplace_back(make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain_vec[tidx]));
 
     // IK Velocity solver
     for (int tidx=0; tidx < num_threads; tidx++)    
-        model->m_ik_vel_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain));
+        model->m_ik_vel_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain_vec[tidx]));
 
     // IK solver
     KDL::JntArray q_min(model->jointVariableCount());
@@ -175,7 +177,7 @@ bool Init(
     for (int tidx=0; tidx < num_threads; tidx++)    
     {
         model->m_ik_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverPos_NR_JL>(
-            model->m_chain,
+            model->m_chain_vec[tidx],
             q_min,
             q_max,
             *model->m_fk_solver_vec[tidx],
@@ -183,8 +185,8 @@ bool Init(
             model->m_max_iterations,
             model->m_kdl_eps));
 
-        model->m_jnt_pos_in_vec[tidx].resize(model->m_chain.getNrOfJoints());
-        model->m_jnt_pos_out_vec[tidx].resize(model->m_chain.getNrOfJoints());
+        model->m_jnt_pos_in_vec[tidx].resize(model->m_chain_vec[tidx].getNrOfJoints());
+        model->m_jnt_pos_out_vec[tidx].resize(model->m_chain_vec[tidx].getNrOfJoints());
     }
 
     model->m_free_angle = free_angle;
