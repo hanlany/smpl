@@ -228,15 +228,30 @@ int EPASE::replan(
     extractPath(goal_state, *solution, *cost);
     
     cout << "*********************" << endl;
+
     cout << "Planning time: " << to_seconds(m_search_time) << endl;;
     cout << "Num state expansions: " << m_num_state_expansions << endl;
     cout << "Num edge evals: " << m_num_edge_evals << endl;
     cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
     cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
     cout << "Edge find time: " << m_edge_find_time   << endl;
+
+    cout << "---------------------" << endl;
+
     cout << "Num expand calls : " << m_num_expand_calls << endl; 
     cout << "Total expansions time: " << m_expansions_time << endl;
     cout << "Average expansions time: " << m_expansions_time/m_num_expand_calls << endl;
+    
+    cout << "---------------------" << endl;
+
+    cout << "Num cheap expansions: " << m_num_cheap_expansions << endl;
+    cout << "Total cheap expansions time: " << m_cheap_expansions_time << endl;
+    cout << "Average cheap expansions time: " << m_cheap_expansions_time/m_num_cheap_expansions << endl;
+
+    cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
+    cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
+    cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
+
     cout << "*********************" << endl;
 
     return !SUCCESS;
@@ -522,9 +537,14 @@ void EPASE::initialize()
     m_num_state_expansions = 0;
     m_num_edge_evals = 0;
     m_num_expand_calls = 0;
+    m_num_cheap_expansions = 0;
+    m_num_exp_expansions = 0;
+   
     m_edge_find_time = 0.0;
     m_expansions_time = 0.0;
-    
+    m_cheap_expansions_time = 0.0;
+    m_exp_expansions_time = 0.0;
+
     m_edge_expansion_vec.clear();
     m_edge_expansion_vec.resize(m_num_threads, NULL);
     
@@ -945,8 +965,12 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         m_space->GetCheapExpensiveSuccsIdxs(edge_ptr->parent_state_ptr->state_id, cheap_succs, expensive_succs);
         edge_ptr->parent_state_ptr->num_successors = cheap_succs.size() + expensive_succs.size();
 
+        auto t_start = clock::now(); 
         expandEdgesReal(edge_ptr, cheap_succs, thread_id);
-        
+        auto t_end = clock::now(); 
+        m_cheap_expansions_time += to_seconds(t_end - t_start);
+        m_num_cheap_expansions+=1;
+
         edge_ptr->parent_state_ptr->num_expanded_successors += cheap_succs.size();
         m_num_edge_evals+=cheap_succs.size();
 
@@ -987,7 +1011,14 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
     else
     { 
         // Real edge, evaluate and add proxy edges for child 
+
+
+        auto t_start = clock::now(); 
         expandEdgeReal(edge_ptr, thread_id);
+        auto t_end = clock::now(); 
+        m_exp_expansions_time += to_seconds(t_end - t_start);
+        m_num_exp_expansions+=1;
+
         edge_ptr->parent_state_ptr->num_expanded_successors += 1;
         m_num_edge_evals+=1;
 
