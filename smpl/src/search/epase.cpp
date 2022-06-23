@@ -952,13 +952,13 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
 
 void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
 {
+    auto t_start = clock::now(); 
 
     auto t_lock_s = clock::now();
     m_lock.lock();
     auto t_lock_e = clock::now();
     m_lock_time += to_seconds(t_lock_e - t_lock_s);
 
-    auto t_start = clock::now(); 
     m_num_expand_calls += 1;
     
     if (VERBOSE) 
