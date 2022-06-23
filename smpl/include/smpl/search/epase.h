@@ -313,6 +313,7 @@ private:
     double m_cheap_expansions_time;
     double m_exp_expansions_time;
     double m_lock_time;
+    std::vector<int> m_num_expansions_per_thread;
 
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
@@ -353,8 +354,8 @@ private:
     int computeKey(SearchState* s) const;
     size_t getEdgeKey(const EdgePtrType& edge_ptr);
 
-    double computeHeuristic(const StatePtrType& state_ptr);
-    double computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2);
+    int computeHeuristic(const StatePtrType& state_ptr);
+    int computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2);
 
     SearchState* getSearchState(int state_id);
     SearchState* createState(int state_id);

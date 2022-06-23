@@ -230,12 +230,16 @@ int EPASE::replan(
     cout << "*********************" << endl;
 
     cout << "Planning time: " << to_seconds(m_search_time) << endl;;
+    cout << "Edge find time: " << m_edge_find_time   << endl;
+    cout << "Lock time: " << m_lock_time << endl;   
+
+    cout << "---------------------" << endl;
+
     cout << "Num state expansions: " << m_num_state_expansions << endl;
     cout << "Num edge evals: " << m_num_edge_evals << endl;
     cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
     cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
-    cout << "Edge find time: " << m_edge_find_time   << endl;
-    cout << "Lock time: " << m_lock_time << endl;   
+
     cout << "---------------------" << endl;
 
     cout << "Num expand calls : " << m_num_expand_calls << endl; 
@@ -251,6 +255,12 @@ int EPASE::replan(
     cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
     cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
     cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
+
+    cout << "---------------------" << endl;
+
+    cout << "Num expansions per thread: " << endl;
+    for (int tidx = 0; tidx < m_num_threads; ++tidx)
+        cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
 
     cout << "*********************" << endl;
 
@@ -551,11 +561,14 @@ void EPASE::initialize()
     
     m_edge_expansion_status.clear();
     m_edge_expansion_status.resize(m_num_threads, 0);
+    
+    m_num_expansions_per_thread.clear();
+    m_num_expansions_per_thread.resize(m_num_threads, 0);
 
     m_edge_expansion_futures.clear();
     m_edge_expansion_futures.resize(1);
     m_being_expanded_states.clear();
-
+    
     vector<LockType> lock_vec(m_num_threads);
     m_lock_vec.swap(lock_vec);
 
@@ -960,6 +973,7 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
     m_lock_time += to_seconds(t_lock_e - t_lock_s);
 
     m_num_expand_calls += 1;
+    m_num_expansions_per_thread[thread_id] += 1;
     
     if (VERBOSE) 
     {
@@ -1092,12 +1106,12 @@ size_t EPASE::getEdgeKey(const EdgePtrType& edge_ptr)
     return seed;
 }
 
-double EPASE::computeHeuristic(const StatePtrType& state_ptr)
+int EPASE::computeHeuristic(const StatePtrType& state_ptr)
 {
     return state_ptr->h;
 }
 
-double EPASE::computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2)
+int EPASE::computeHeuristic(const StatePtrType& state_ptr_1, const StatePtrType& state_ptr_2)
 {
     return abs(computeHeuristic(state_ptr_1)-computeHeuristic(state_ptr_2));
 }
