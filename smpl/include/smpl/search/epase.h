@@ -312,6 +312,7 @@ private:
     double m_expansions_time;
     double m_cheap_expansions_time;
     double m_exp_expansions_time;
+    double m_lock_time;
 
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 

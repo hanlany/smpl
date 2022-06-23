@@ -235,7 +235,7 @@ int EPASE::replan(
     cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
     cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
     cout << "Edge find time: " << m_edge_find_time   << endl;
-
+    cout << "Lock time: " << m_lock_time << endl;   
     cout << "---------------------" << endl;
 
     cout << "Num expand calls : " << m_num_expand_calls << endl; 
@@ -544,7 +544,8 @@ void EPASE::initialize()
     m_expansions_time = 0.0;
     m_cheap_expansions_time = 0.0;
     m_exp_expansions_time = 0.0;
-
+    m_lock_time = 0.0;
+    
     m_edge_expansion_vec.clear();
     m_edge_expansion_vec.resize(m_num_threads, NULL);
     
@@ -657,7 +658,10 @@ int EPASE::improvePath(
                 while(!m_recheck_flag && !m_terminate){
                     // cout << "WAIT" << endl;
                 }
-                m_lock.lock();    
+                auto t_lock_s = clock::now();
+                m_lock.lock();
+                auto t_lock_e = clock::now();
+                // m_lock_time += to_seconds(t_lock_e - t_lock_s);
                 // cout << "CONT" << endl;
                 continue;
             }
@@ -736,7 +740,10 @@ int EPASE::improvePath(
             }
         }
 
+        auto t_lock_s = clock::now();
         m_lock.lock();
+        auto t_lock_e = clock::now();
+        // m_lock_time += to_seconds(t_lock_e - t_lock_s);
         elapsed_expansions = m_num_state_expansions; 
     }
 
@@ -789,11 +796,13 @@ void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
 
     m_lock.unlock();
     // Evaluate the edge
-    auto t_start = clock::now();
     m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
-    auto t_end = clock::now();
     //********************
+    auto t_lock_s = clock::now();
     m_lock.lock();
+    auto t_lock_e = clock::now();
+    m_lock_time += to_seconds(t_lock_e - t_lock_s);
+
     // planner_stats_.num_evaluated_edges_++; // Only the edges controllers that satisfied pre-conditions and args are in the open list
 
     if (!succ_state_id.empty())
@@ -869,7 +878,10 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
 
     m_lock.unlock();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
+    auto t_lock_s = clock::now();
     m_lock.lock();
+    auto t_lock_e = clock::now();
+    m_lock_time += to_seconds(t_lock_e - t_lock_s);
 
     for (auto succ_idx = 0; succ_idx < succs.size(); ++succ_idx)
     {
@@ -941,7 +953,11 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
 void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
 {
 
+    auto t_lock_s = clock::now();
     m_lock.lock();
+    auto t_lock_e = clock::now();
+    m_lock_time += to_seconds(t_lock_e - t_lock_s);
+
     auto t_start = clock::now(); 
     m_num_expand_calls += 1;
     
