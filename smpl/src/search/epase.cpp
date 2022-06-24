@@ -230,38 +230,38 @@ int EPASE::replan(
     cout << "*********************" << endl;
 
     cout << "Planning time: " << to_seconds(m_search_time) << endl;;
-    cout << "Edge find time: " << m_edge_find_time   << endl;
-    cout << "Lock time: " << m_lock_time << endl;   
+    cout << "Total expansions time: " << m_expansions_time << endl;
+    cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
+    cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
 
-    cout << "---------------------" << endl;
+    cout << endl << "---------------------" << endl;
+
+    cout << "Num expand calls : " << m_num_expand_calls << endl; 
+    cout << "Average expansions time: " << m_expansions_time/m_num_expand_calls << endl;
+
+    cout << endl << "---------------------" << endl;
 
     cout << "Num state expansions: " << m_num_state_expansions << endl;
     cout << "Num edge evals: " << m_num_edge_evals << endl;
     cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
     cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
 
-    cout << "---------------------" << endl;
-
-    cout << "Num expand calls : " << m_num_expand_calls << endl; 
-    cout << "Total expansions time: " << m_expansions_time << endl;
-    cout << "Average expansions time: " << m_expansions_time/m_num_expand_calls << endl;
-    
-    cout << "---------------------" << endl;
+    cout << endl << "------------- Cheap expansions -------------" << endl;
 
     cout << "Num cheap expansions: " << m_num_cheap_expansions << endl;
     cout << "Total cheap expansions time: " << m_cheap_expansions_time << endl;
     cout << "Average cheap expansions time: " << m_cheap_expansions_time/m_num_cheap_expansions << endl;
 
+    cout << endl << "------------- Expensive expansions -------------" << endl ;
+
     cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
     cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
     cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
 
-    cout << "---------------------" << endl;
-
-    cout << "Num expansions per thread: " << endl;
+    cout << endl << "------------- Expansions per thread -------------" << endl;
     for (int tidx = 0; tidx < m_num_threads; ++tidx)
         cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
-
+   
     cout << "*********************" << endl;
 
     return !SUCCESS;
