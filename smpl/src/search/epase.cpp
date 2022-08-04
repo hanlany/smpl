@@ -1036,7 +1036,7 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         // cout << "eopen size: " << m_edge_open.size();
 
         // num_proxy_expansions_++; 
-        m_recheck_flag = true;
+        // m_recheck_flag = true;
     }
     else
     { 
