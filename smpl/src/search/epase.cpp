@@ -233,6 +233,9 @@ int EPASE::replan(
     cout << "Total expansions time: " << m_expansions_time << endl;
     cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
+    cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
+    cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
+    cout <<  "Open list size: " << m_edge_open_size << endl;
 
     cout << endl << "---------------------" << endl;
 
@@ -551,6 +554,7 @@ void EPASE::initialize()
     m_num_exp_expansions = 0;
    
     m_edge_find_time = 0.0;
+    m_num_edge_found = 0;
     m_expansions_time = 0.0;
     m_cheap_expansions_time = 0.0;
     m_exp_expansions_time = 0.0;
@@ -714,6 +718,7 @@ int EPASE::improvePath(
 
         auto now_edge_found = clock::now(); 
         m_edge_find_time += to_seconds(now_edge_found - now);
+        m_num_edge_found++;
 
         m_lock.unlock();
 
@@ -1036,7 +1041,6 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         // cout << "eopen size: " << m_edge_open.size();
 
         // num_proxy_expansions_++; 
-        // m_recheck_flag = true;
     }
     else
     { 
@@ -1193,6 +1197,7 @@ void EPASE::exit()
     }
     m_edge_expansion_futures.clear();
 
+    m_edge_open_size = m_edge_open.size();
     while (!m_edge_open.empty())
         m_edge_open.pop();
     
