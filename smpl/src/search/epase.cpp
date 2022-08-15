@@ -256,13 +256,13 @@ int EPASE::replan(
     cout << "Num cheap expansions: " << m_num_cheap_expansions << endl;
     cout << "Total cheap expansions time: " << m_cheap_expansions_time << endl;
     cout << "Average cheap expansions time: " << m_cheap_expansions_time/m_num_cheap_expansions << endl;
-
+    cout << "Average cheap GetSucc time: " << m_cheap_get_succ_time/m_num_cheap_expansions << endl;
     cout << endl << "------------- Expensive expansions -------------" << endl ;
 
     cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
     cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
     cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
-
+    cout << "Average expensive GetSucc time: " << m_exp_get_succ_time/m_num_exp_expansions << endl;
     cout << endl << "------------- Expansions per thread -------------" << endl;
     for (int tidx = 0; tidx < m_num_threads; ++tidx)
         cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
@@ -559,7 +559,9 @@ void EPASE::initialize()
     m_edge_find_time = 0.0;
     m_num_edge_found = 0;
     m_expansions_time = 0.0;
+    m_cheap_get_succ_time = 0.0;
     m_cheap_expansions_time = 0.0;
+    m_exp_get_succ_time = 0.0;
     m_exp_expansions_time = 0.0;
     m_lock_time = 0.0;
     
@@ -818,7 +820,10 @@ void EPASE::expandEdgeReal(EdgePtrType edge_ptr, int thread_id)
 
     m_lock.unlock();
     // Evaluate the edge
+    auto t_succ_s = clock::now();
     m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+    auto t_succ_e = clock::now();
+    m_exp_get_succ_time += to_seconds(t_succ_e - t_succ_s);
     //********************
     auto t_lock_s = clock::now();
     m_lock.lock();
@@ -899,7 +904,12 @@ void EPASE::expandEdgesReal(EdgePtrType& edge_ptr, vector<int>& action_idx_vec, 
     vector<int> succs;
 
     m_lock.unlock();
+
+    auto t_succ_s = clock::now();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
+    auto t_succ_e = clock::now();
+    m_cheap_get_succ_time += to_seconds(t_succ_e - t_succ_s);
+ 
     auto t_lock_s = clock::now();
     m_lock.lock();
     auto t_lock_e = clock::now();
