@@ -599,6 +599,7 @@ int EPASE::improvePath(
     {
         EdgePtrType min_edge_ptr = NULL;
         auto now = clock::now();
+        double local_lock_time = 0.0;
         elapsed_time = now - start_time;
 
         while (!min_edge_ptr && !m_terminate)
@@ -683,7 +684,7 @@ int EPASE::improvePath(
                 auto t_lock_s = clock::now();
                 m_lock.lock();
                 auto t_lock_e = clock::now();
-                // m_lock_time += to_seconds(t_lock_e - t_lock_s);
+                local_lock_time += to_seconds(t_lock_e - t_lock_s);
                 // cout << "CONT" << endl;
                 continue;
             }
@@ -722,7 +723,7 @@ int EPASE::improvePath(
         }
 
         auto now_edge_found = clock::now(); 
-        m_edge_find_time += to_seconds(now_edge_found - now);
+        m_edge_find_time += to_seconds(now_edge_found - now) - local_lock_time;
         m_num_edge_found++;
         m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
 
