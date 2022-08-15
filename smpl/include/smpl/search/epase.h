@@ -198,9 +198,13 @@ private:
 
         void Print(std::string str = "")
         {
+            if (str.empty())
+                std::cout << " ";
+
             std::cout << str << "id: " << state_id 
             << " | g: " << g
             << " | h: " << h
+            << " | f: " << f
             << " | is_visited: " << is_visited
             << " | being_expanded: " << being_expanded
             << " | expanded succs: " << num_expanded_successors << "/" << num_successors
@@ -232,6 +236,7 @@ private:
     
         void Print(std::string str = "", bool print_parent = false)
         {
+            std::cout << "-----------------------------------" << std::endl;
             std::cout << str;
             if (!str.empty()) std::cout << " ";
             std::cout << "id: " << edge_id << " | parent: " << parent_state_ptr->state_id << " | action_idx: " << action_idx;
@@ -239,6 +244,8 @@ private:
             std::cout << " | exp_priority: " << exp_priority;
             std::cout << std::endl;
             if (print_parent) parent_state_ptr->Print("Parent state ");
+            std::cout << "-----------------------------------" << std::endl;
+
         };
 
     };
