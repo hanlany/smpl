@@ -237,6 +237,7 @@ int EPASE::replan(
     cout << endl << "---------------------" << endl;
     cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
     cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
+    cout << "Total wait time: " << m_wait_time << endl;
     cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
     cout << "Last open list size: " << m_edge_open_last_size << endl;
     cout << "Max open list size: " << m_edge_open_max_size << endl;
