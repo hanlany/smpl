@@ -637,32 +637,32 @@ int EPASE::improvePath(
 
                 if (min_edge_ptr->parent_state_ptr->being_expanded)
                     continue;
-
-                // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
-                for (auto& popped_edge_ptr : popped_edges)
+            
+                // Independence check of curr_edge with edges in BE
+                for (auto& id_state : m_being_expanded_states)
                 {
-                    if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
+                    if (id_state.second != min_edge_ptr->parent_state_ptr)
                     {
-                        auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
-                        if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
+                        auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                        if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
                         {
-                            // state_to_expand_found = false;
                             min_edge_ptr = NULL;
                             break;
                         }
                     }
                 }
-     
+            
                 if (min_edge_ptr)
                 {
-                    // Independence check of curr_edge with edges in BE
-                    for (auto& id_state : m_being_expanded_states)
+                    // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
+                    for (auto& popped_edge_ptr : popped_edges)
                     {
-                        if (id_state.second != min_edge_ptr->parent_state_ptr)
+                        if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
                         {
-                            auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
-                            if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
+                            auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
+                            if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
                             {
+                                // state_to_expand_found = false;
                                 min_edge_ptr = NULL;
                                 break;
                             }
