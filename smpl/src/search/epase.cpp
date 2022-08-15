@@ -234,10 +234,14 @@ int EPASE::replan(
     cout << "Total expansions time: " << m_expansions_time << endl;
     cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
+
+    cout << endl << "---------------------" << endl;
     cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
     cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
-    cout <<  "Last open list size: " << m_edge_open_last_size << endl;
-    cout <<  "Max open list size: " << m_edge_open_max_size << endl;
+    cout << "Last open list size: " << m_edge_open_last_size << endl;
+    cout << "Max open list size: " << m_edge_open_max_size << endl;
+    cout << "Number of times open exhaust to find edge: " << m_num_open_exhaust_to_find_edge << endl;
+    cout << "Avg popped edges size: " << m_num_popped_edges/m_times_popped_edges << " (" << m_num_popped_edges << " / " << m_times_popped_edges << ")" << endl;
 
     cout << endl << "---------------------" << endl;
 
@@ -555,6 +559,8 @@ void EPASE::initialize()
     m_num_cheap_expansions = 0;
     m_num_exp_expansions = 0;
     m_edge_open_max_size  = 0;
+    m_num_popped_edges = 0;
+    m_times_popped_edges = 0;
     
     m_edge_find_time = 0.0;
     m_num_edge_found = 0;
@@ -564,7 +570,8 @@ void EPASE::initialize()
     m_exp_get_succ_time = 0.0;
     m_exp_expansions_time = 0.0;
     m_lock_time = 0.0;
-    
+    m_num_open_exhaust_to_find_edge = 0.0;
+
     m_edge_expansion_vec.clear();
     m_edge_expansion_vec.resize(m_num_threads, NULL);
     
@@ -629,6 +636,9 @@ int EPASE::improvePath(
                     continue;
 
                 // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
+                m_num_popped_edges += popped_edges.size();
+                m_times_popped_edges++;
+
                 for (auto& popped_edge_ptr : popped_edges)
                 {
                     if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
@@ -710,6 +720,9 @@ int EPASE::improvePath(
                 m_lock.unlock();
                 return TIMED_OUT;
             }
+
+            if (m_edge_open.empty() && !min_edge_ptr)
+                m_num_open_exhaust_to_find_edge++;
 
         }
 
