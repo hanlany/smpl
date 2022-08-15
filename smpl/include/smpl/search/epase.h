@@ -308,7 +308,8 @@ private:
     int m_num_cheap_expansions;
     int m_num_exp_expansions;
     int m_num_edge_found;
-    int m_edge_open_size;
+    int m_edge_open_last_size;
+    int m_edge_open_max_size;
 
     double m_edge_find_time;
     double m_expansions_time;

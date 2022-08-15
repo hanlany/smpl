@@ -32,6 +32,7 @@
 #include <smpl/search/epase.h>
 
 #include <algorithm>
+#include <cmath>
 
 // system includes
 #include <sbpl/utils/key.h>
@@ -235,7 +236,8 @@ int EPASE::replan(
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
     cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
     cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
-    cout <<  "Open list size: " << m_edge_open_size << endl;
+    cout <<  "Last open list size: " << m_edge_open_last_size << endl;
+    cout <<  "Max open list size: " << m_edge_open_max_size << endl;
 
     cout << endl << "---------------------" << endl;
 
@@ -552,7 +554,8 @@ void EPASE::initialize()
     m_num_expand_calls = 0;
     m_num_cheap_expansions = 0;
     m_num_exp_expansions = 0;
-   
+    m_edge_open_max_size  = 0;
+    
     m_edge_find_time = 0.0;
     m_num_edge_found = 0;
     m_expansions_time = 0.0;
@@ -719,6 +722,7 @@ int EPASE::improvePath(
         auto now_edge_found = clock::now(); 
         m_edge_find_time += to_seconds(now_edge_found - now);
         m_num_edge_found++;
+        m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
 
         m_lock.unlock();
 
@@ -1197,7 +1201,7 @@ void EPASE::exit()
     }
     m_edge_expansion_futures.clear();
 
-    m_edge_open_size = m_edge_open.size();
+    m_edge_open_last_size = m_edge_open.size();
     while (!m_edge_open.empty())
         m_edge_open.pop();
     
