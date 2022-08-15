@@ -706,12 +706,9 @@ int EPASE::improvePath(
                 auto t_lock_e = clock::now();
                 local_lock_time += to_seconds(t_lock_e - t_lock_s);
                 // cout << "CONT" << endl;
+                m_recheck_flag = false;
                 continue;
             }
-
-
-            // if (!terminate_)
-            m_recheck_flag = false;
             
 
             // path to goal found
