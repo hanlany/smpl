@@ -313,7 +313,9 @@ private:
 
     double m_edge_find_time;
     double m_expansions_time;
+    double m_cheap_get_succ_time;
     double m_cheap_expansions_time;
+    double m_exp_get_succ_time;
     double m_exp_expansions_time;
     double m_lock_time;
     std::vector<int> m_num_expansions_per_thread;
