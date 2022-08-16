@@ -231,14 +231,16 @@ int EPASE::replan(
     cout << "*********************" << endl;
 
     cout << "Planning time: " << to_seconds(m_search_time) << endl;;
+    cout << endl << "---------------------" << endl;
     cout << "Total expansions time: " << m_expansions_time << endl;
     cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
+    cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
+    cout << "Total wait time: " << m_wait_time << endl;
+    cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
     cout << endl << "---------------------" << endl;
     cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
     cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
-    cout << "Total wait time: " << m_wait_time << endl;
-    cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
     cout << "Last open list size: " << m_edge_open_last_size << endl;
     cout << "Max open list size: " << m_edge_open_max_size << endl;
     cout << "Number of times open exhaust to find edge: " << m_num_open_exhaust_to_find_edge << endl;
@@ -572,6 +574,7 @@ void EPASE::initialize()
     m_exp_get_succ_time = 0.0;
     m_exp_expansions_time = 0.0;
     m_lock_time = 0.0;
+    m_lock_time_main_thread = 0.0;
     m_wait_time = 0.0;
     m_num_open_exhaust_to_find_edge = 0.0;
 
@@ -744,6 +747,7 @@ int EPASE::improvePath(
 
         auto now_edge_found = clock::now(); 
         m_edge_find_time += to_seconds(now_edge_found - now) - local_lock_time;
+        m_lock_time_main_thread += local_lock_time;
         m_num_edge_found++;
         m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
 
