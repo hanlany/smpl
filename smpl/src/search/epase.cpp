@@ -230,21 +230,30 @@ int EPASE::replan(
     
     cout << "*********************" << endl;
     cout << "Planning time: " << to_seconds(m_search_time) << endl;
-    cout << endl << "---------------------" << endl;
-    cout << "Total expansions time: " << m_expansions_time << endl;
-    cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
+
+    
     cout << endl << "---------- Main thread times -----------" << endl;
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
-    cout << "Total BE check time: " << m_be_check_time << endl;
+    cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
+    cout << "Avg BE check time: " << m_be_check_time/m_num_be_check << " (" << m_be_check_time << "/" << m_num_be_check << ")" << endl;
     cout << "Total OPEN check time: " << m_open_check_time << endl;
     cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
     cout << "Total wait time: " << m_wait_time << endl;
     cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
     cout << endl << "---------------------" << endl;
+
+    cout << endl << "---------- Expansion thread times -----------" << endl;
+    cout << "Total expansions time: " << m_expansions_time << endl;
+    cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
+
+    cout << endl << "--------- Data structures sizes------------" << endl;
     cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
-    cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
     cout << "Last open list size: " << m_edge_open_last_size << endl;
     cout << "Max open list size: " << m_edge_open_max_size << endl;
+    cout << "Last BE list size: " << m_be_last_size << endl;
+    cout << "Max BE list size: " << m_be_max_size << endl;
+    cout << endl << "---------------------" << endl;
+
     cout << "Number of times open exhaust to find edge: " << m_num_open_exhaust_to_find_edge << endl;
     cout << "Avg popped edges size: " << m_num_popped_edges/m_times_popped_edges << " (" << m_num_popped_edges << " / " << m_times_popped_edges << ")" << endl;
 
@@ -563,10 +572,14 @@ void EPASE::initialize()
     m_num_expand_calls = 0;
     m_num_cheap_expansions = 0;
     m_num_exp_expansions = 0;
+    m_be_last_size = 0; 
+    m_be_max_size = 0; 
+    m_edge_open_last_size  = 0;
     m_edge_open_max_size  = 0;
     m_num_popped_edges = 0;
     m_times_popped_edges = 0;
     m_wait_num = 0;
+    m_num_be_check = 0;
 
     m_edge_find_time = 0.0;
     m_num_edge_found = 0;
@@ -661,7 +674,8 @@ int EPASE::improvePath(
                 }
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
-            
+                m_num_be_check++;
+
                 if (min_edge_ptr)
                 {
                     // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
@@ -761,7 +775,8 @@ int EPASE::improvePath(
         m_lock_time_main_thread += local_lock_time;
         m_num_edge_found++;
         m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
-
+        m_be_max_size = max(m_be_max_size, (int)m_being_expanded_states.size());
+        
         m_lock.unlock();
 
 
@@ -1248,6 +1263,8 @@ void EPASE::exit()
     m_edge_expansion_futures.clear();
 
     m_edge_open_last_size = m_edge_open.size();
+    m_be_last_size = m_being_expanded_states.size();
+
     while (!m_edge_open.empty())
         m_edge_open.pop();
     

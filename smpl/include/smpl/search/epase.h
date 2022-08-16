@@ -317,10 +317,13 @@ private:
     int m_num_edge_found;
     int m_edge_open_last_size;
     int m_edge_open_max_size;
+    int m_be_last_size;
+    int m_be_max_size;
     int m_num_open_exhaust_to_find_edge;
     int m_num_popped_edges;
     int m_times_popped_edges;
     int m_wait_num;
+    int m_num_be_check;
 
     double m_edge_find_time;
     double m_expansions_time;
