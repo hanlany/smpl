@@ -229,12 +229,14 @@ int EPASE::replan(
     extractPath(goal_state, *solution, *cost);
     
     cout << "*********************" << endl;
-
-    cout << "Planning time: " << to_seconds(m_search_time) << endl;;
+    cout << "Planning time: " << to_seconds(m_search_time) << endl;
     cout << endl << "---------------------" << endl;
     cout << "Total expansions time: " << m_expansions_time << endl;
     cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
+    cout << endl << "---------- Main thread times -----------" << endl;
     cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
+    cout << "Total BE check time: " << m_be_check_time << endl;
+    cout << "Total OPEN check time: " << m_open_check_time << endl;
     cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
     cout << "Total wait time: " << m_wait_time << endl;
     cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
@@ -576,6 +578,8 @@ void EPASE::initialize()
     m_lock_time = 0.0;
     m_lock_time_main_thread = 0.0;
     m_wait_time = 0.0;
+    m_be_check_time = 0.0;
+    m_open_check_time = 0.0;
     m_num_open_exhaust_to_find_edge = 0.0;
 
     m_edge_expansion_vec.clear();
@@ -642,6 +646,7 @@ int EPASE::improvePath(
                     continue;
             
                 // Independence check of curr_edge with edges in BE
+                auto t_be_check_s = clock::now();
                 for (auto& id_state : m_being_expanded_states)
                 {
                     if (id_state.second != min_edge_ptr->parent_state_ptr)
@@ -654,10 +659,13 @@ int EPASE::improvePath(
                         }
                     }
                 }
+                auto t_be_check_e = clock::now();
+                m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
             
                 if (min_edge_ptr)
                 {
                     // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
+                    auto t_open_check_s = clock::now();
                     for (auto& popped_edge_ptr : popped_edges)
                     {
                         if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
@@ -671,6 +679,9 @@ int EPASE::improvePath(
                             }
                         }
                     }
+                    auto t_open_check_e = clock::now();
+                    m_open_check_time += to_seconds(t_open_check_e-t_open_check_s);
+
                 }
             }
 

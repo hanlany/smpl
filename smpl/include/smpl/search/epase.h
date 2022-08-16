@@ -330,6 +330,8 @@ private:
     double m_exp_expansions_time;
     double m_lock_time;
     double m_lock_time_main_thread;
+    double m_be_check_time;
+    double m_open_check_time;
     double m_wait_time;
     std::vector<int> m_num_expansions_per_thread;
 
