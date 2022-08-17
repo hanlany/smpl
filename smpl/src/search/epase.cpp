@@ -608,8 +608,8 @@ void EPASE::initialize()
     m_edge_expansion_futures.resize(1);
     m_being_expanded_states.clear();
     
-    vector<LockType> lock_vec(m_num_threads);
-    m_lock_vec.swap(lock_vec);
+    m_lock_vec = move(vector<LockType>(m_num_threads));
+    m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
 }
 
@@ -792,9 +792,11 @@ int EPASE::improvePath(
             bool edge_expansion_assigned = false;
             while (!edge_expansion_assigned)
             {
-                m_lock_vec[thread_id].lock();
-                bool status = m_edge_expansion_status[thread_id];
-                m_lock_vec[thread_id].unlock();
+                unique_lock<mutex> locker(m_lock_vec[thread_id]);
+                auto status = m_edge_expansion_status[thread_id];
+                locker.unlock();                
+                m_cv_vec[thread_id].notify_one();
+
 
                 if (!status)
                 {
@@ -803,11 +805,11 @@ int EPASE::improvePath(
                         if (1) cout << "Spawning edge expansion thread " << thread_id << endl;
                         m_edge_expansion_futures.emplace_back(async(launch::async, &EPASE::expandEdgeLoop, this, thread_id));
                     }
-                    m_lock_vec[thread_id].lock();
+                    locker.lock();
                     m_edge_expansion_vec[thread_id] = min_edge_ptr;
                     m_edge_expansion_status[thread_id] = 1;
                     edge_expansion_assigned = true;       
-                    m_lock_vec[thread_id].unlock();
+                    locker.unlock();
                 }
                 else
                     thread_id = thread_id == m_num_threads-1 ? 1 : thread_id+1;
@@ -834,17 +836,17 @@ void EPASE::expandEdgeLoop(int thread_id)
     while (!m_terminate)
     {
 
-        m_lock_vec[thread_id].lock();
-        bool status = m_edge_expansion_status[thread_id];
-        m_lock_vec[thread_id].unlock();
+        unique_lock<mutex> locker(m_lock_vec[thread_id]);
+        m_cv_vec[thread_id].wait(locker, [this, thread_id](){return (m_edge_expansion_status[thread_id] == 1);});
+        locker.unlock();
 
-        while ((!status) && (!m_terminate))
-        {
-            m_lock_vec[thread_id].lock();
-            status = m_edge_expansion_status[thread_id];
-            m_lock_vec[thread_id].unlock();
-            // cout << "Expansion thread " << thread_id << " waiting! " << m_edge_expansion_status[thread_id] << endl;
-        }
+        // while ((!status) && (!m_terminate))
+        // {
+        //     m_lock_vec[thread_id].lock();
+        //     status = m_edge_expansion_status[thread_id];
+        //     m_lock_vec[thread_id].unlock();
+        //     // cout << "Expansion thread " << thread_id << " waiting! " << m_edge_expansion_status[thread_id] << endl;
+        // }
 
         if (m_terminate)
             break;
@@ -852,10 +854,10 @@ void EPASE::expandEdgeLoop(int thread_id)
 
         expandEdge(m_edge_expansion_vec[thread_id], thread_id);
 
-        m_lock_vec[thread_id].lock();
+        locker.lock();
         m_edge_expansion_vec[thread_id] = NULL;
         m_edge_expansion_status[thread_id] = 0;
-        m_lock_vec[thread_id].unlock();
+        locker.unlock();
 
     }    
 }
@@ -1245,6 +1247,16 @@ void EPASE::extractPath(
 
 void EPASE::exit()
 {
+
+    for (int thread_id = 1; thread_id < m_num_threads; ++thread_id)
+    {
+        unique_lock<mutex> locker(m_lock_vec[thread_id]);
+        m_edge_expansion_status[thread_id] = 1;
+        locker.unlock();
+        m_cv_vec[thread_id].notify_one();
+    }
+
+
     bool all_expansion_threads_terminated = false;
     while (!all_expansion_threads_terminated)
     {
