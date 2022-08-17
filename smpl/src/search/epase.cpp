@@ -718,23 +718,38 @@ int EPASE::improvePath(
 
             if (!min_edge_ptr)
             {
+                // m_lock.unlock();
+                // auto t_wait_s = clock::now();                
+                // // Wait for recheck_flag_ to be set true;
+                // while(!m_recheck_flag && !m_terminate){
+                //     // cout << "WAIT" << endl;
+                // }
+
+                // auto t_wait_e = clock::now();                
+                // m_wait_time += to_seconds(t_wait_e - t_wait_s);
+                // m_wait_num++;
+
+                // auto t_lock_s = clock::now();
+
+                // m_lock.lock();
+                // auto t_lock_e = clock::now();
+                // local_lock_time += to_seconds(t_lock_e - t_lock_s);
+                // m_recheck_flag = false;
+                // continue;
+
                 m_lock.unlock();
+                unique_lock<mutex> locker(m_lock);
 
                 auto t_wait_s = clock::now();                
-                // Wait for recheck_flag_ to be set true;
-                while(!m_recheck_flag && !m_terminate){
-                    // cout << "WAIT" << endl;
-                }
+                m_cv.wait(locker, [this](){return (m_recheck_flag==true);});
                 auto t_wait_e = clock::now();                
                 m_wait_time += to_seconds(t_wait_e - t_wait_s);
                 m_wait_num++;
 
-                auto t_lock_s = clock::now();
-                m_lock.lock();
-                auto t_lock_e = clock::now();
-                local_lock_time += to_seconds(t_lock_e - t_lock_s);
-                // cout << "CONT" << endl;
                 m_recheck_flag = false;
+                locker.unlock();
+                m_lock.lock();
+
                 continue;
             }
             
@@ -1151,6 +1166,8 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
     m_expansions_time += to_seconds(t_end - t_start);
 
     m_lock.unlock();
+
+    m_cv.notify_one();
     // getchar();
 }
 
