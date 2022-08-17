@@ -341,6 +341,7 @@ private:
     mutable LockType m_lock;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::condition_variable> m_cv_vec;
+    std::condition_variable m_cv;
 
     std::vector<std::future<void>> m_edge_expansion_futures;
     std::vector<EdgePtrType> m_edge_expansion_vec;
