@@ -656,7 +656,7 @@ int EPASE::improvePath(
                 popped_edges.emplace_back(min_edge_ptr);
 
                 if (min_edge_ptr->parent_state_ptr->being_expanded)
-                    continue;
+                    break;
             
                 // Independence check of curr_edge with edges in BE
                 auto t_be_check_s = clock::now();
