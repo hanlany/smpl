@@ -340,13 +340,20 @@ private:
     std::vector<int> m_num_expansions_per_thread;
 
     mutable LockType m_lock;
+    mutable LockType m_be_check_lock;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::condition_variable> m_cv_vec;
     std::condition_variable m_cv;
 
     std::vector<std::future<void>> m_edge_expansion_futures;
+    std::vector<std::future<void>> m_be_check_futures;
     std::vector<EdgePtrType> m_edge_expansion_vec;
     std::vector<int> m_edge_expansion_status;
+    std::vector<EdgePtrType> min_edges_;
+    std::vector<bool> m_be_check_task;
+    std::condition_variable m_be_check_cv;
+    std::condition_variable m_be_check_done_cv;
+
 
     // Control variables
     std::atomic<bool> m_recheck_flag;
@@ -370,6 +377,7 @@ private:
         SearchState* goal_state,
         int& elapsed_expansions,
         clock::duration& elapsed_time);
+    void beCheckLoop(int tidx);
     void beCheck(std::vector<EdgePtrType>& min_edges, int edge_idx);
     void expandEdgeLoop(int thread_id);
     void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);

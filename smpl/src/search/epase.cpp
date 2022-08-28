@@ -604,6 +604,7 @@ void EPASE::initialize()
     m_num_expansions_per_thread.clear();
     m_num_expansions_per_thread.resize(m_num_threads, 0);
 
+
     m_edge_expansion_futures.clear();
     m_edge_expansion_futures.resize(1);
     m_being_expanded_states.clear();
@@ -611,8 +612,13 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
-    m_num_be_check_threads = 1;
+    m_num_be_check_threads = 3;
+    m_be_check_futures.clear();
+    m_be_check_futures.resize(m_num_be_check_threads-1);
 
+    min_edges_.clear();
+    m_be_check_task.clear();
+    m_be_check_task.resize(m_num_be_check_threads-1);
 }
 
 // Expand states to improve the current solution until a solution within the
@@ -625,7 +631,9 @@ int EPASE::improvePath(
 {
 
     vector<EdgePtrType> popped_edges;
-    vector<EdgePtrType> min_edges;
+
+    for (auto be_check_tidx = 0; be_check_tidx < m_be_check_futures.size(); be_check_tidx++)
+        m_be_check_futures[be_check_tidx] = async(launch::async, &EPASE::beCheckLoop, this, be_check_tidx);
 
     m_lock.lock();
 
@@ -634,9 +642,9 @@ int EPASE::improvePath(
         auto now = clock::now();
         double local_lock_time = 0.0;
         elapsed_time = now - start_time;
-        min_edges.clear();
+        min_edges_.clear();
 
-        while (min_edges.empty() && !m_terminate)
+        while (min_edges_.empty() && !m_terminate)
         {
 
             // cout << "eopen size: " << m_edge_open.size() << endl;
@@ -652,7 +660,7 @@ int EPASE::improvePath(
                 return false;
             }
 
-            while(min_edges.empty() && !m_edge_open.empty())
+            while(min_edges_.empty() && !m_edge_open.empty())
             {
 
 
@@ -661,34 +669,42 @@ int EPASE::improvePath(
                     auto min_edge_ptr = m_edge_open.min();
                     m_edge_open.pop();
                     popped_edges.emplace_back(min_edge_ptr);
-                    min_edges.emplace_back(min_edge_ptr);
+                    min_edges_.emplace_back(min_edge_ptr);
                     // if (min_edge_ptr->parent_state_ptr->being_expanded)
                     //     i--;
                 }
             
 
-
-     
-                // getchar();
-
                 // Independence check of curr_edge with edges in BE
                 auto t_be_check_s = clock::now();
 
                 vector<thread> be_check_threads;
-                for (auto edge_idx = 1; edge_idx < min_edges.size(); edge_idx++)
-                    be_check_threads.emplace_back(thread(&EPASE::beCheck, this, ref(min_edges), edge_idx));
+                for (auto edge_idx = 1; edge_idx < min_edges_.size(); edge_idx++)
+                    m_be_check_task[edge_idx] = true;
 
-                beCheck(min_edges, 0);
+                m_be_check_cv.notify_all();
 
-                for (auto& t: be_check_threads)
-                    t.join();
+
+                beCheck(min_edges_, 0);
+
+                // Wait for all BE check tasks to be done
+                auto be_done_fptr = [this](){
+                    bool all_done = true; 
+                    for (const auto& b : m_be_check_task)
+                        all_done = all_done && (!b);
+                    return all_done;
+                        };
+
+
+                unique_lock<mutex> locker(m_be_check_lock);
+                m_be_check_done_cv.wait(locker, be_done_fptr);
 
 
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                 m_num_be_check+=be_check_threads.size();
 
-                for (auto& min_edge_ptr : min_edges)
+                for (auto& min_edge_ptr : min_edges_)
                 {
                     if (min_edge_ptr)
                     {
@@ -726,7 +742,7 @@ int EPASE::improvePath(
             // Re add the popped states except edges which will be expanded now
             for (auto& popped_edge_ptr : popped_edges)
             {                
-                if (find(min_edges.begin(), min_edges.end(), popped_edge_ptr) == min_edges.end())
+                if (find(min_edges_.begin(), min_edges_.end(), popped_edge_ptr) == min_edges_.end())
                 {
                     m_edge_open.push(popped_edge_ptr);
                 }
@@ -740,7 +756,7 @@ int EPASE::improvePath(
             popped_edges.clear();
 
             vector<EdgePtrType> min_edges_local;
-            for (auto& min_edge_ptr : min_edges)
+            for (auto& min_edge_ptr : min_edges_)
             {
                 if (min_edge_ptr)
                 {
@@ -756,29 +772,10 @@ int EPASE::improvePath(
                     min_edges_local.emplace_back(min_edge_ptr);
                 }
             }           
-            min_edges = min_edges_local;
+            min_edges_ = min_edges_local;
 
-            if (min_edges.empty())
+            if (min_edges_.empty())
             {
-                // m_lock.unlock();
-                // auto t_wait_s = clock::now();                
-                // // Wait for recheck_flag_ to be set true;
-                // while(!m_recheck_flag && !m_terminate){
-                //     // cout << "WAIT" << endl;
-                // }
-
-                // auto t_wait_e = clock::now();                
-                // m_wait_time += to_seconds(t_wait_e - t_wait_s);
-                // m_wait_num++;
-
-                // auto t_lock_s = clock::now();
-
-                // m_lock.lock();
-                // auto t_lock_e = clock::now();
-                // local_lock_time += to_seconds(t_lock_e - t_lock_s);
-                // m_recheck_flag = false;
-                // continue;
-
                 m_lock.unlock();
                 unique_lock<mutex> locker(m_lock);
  
@@ -803,13 +800,13 @@ int EPASE::improvePath(
                 return TIMED_OUT;
             }
 
-            if (m_edge_open.empty() && min_edges.empty())
+            if (m_edge_open.empty() && min_edges_.empty())
                 m_num_open_exhaust_to_find_edge++;
 
         }
 
 
-        for (auto& min_edge_ptr : min_edges)
+        for (auto& min_edge_ptr : min_edges_)
         {
             // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
             if (min_edge_ptr->action_idx == -1)
@@ -883,6 +880,19 @@ int EPASE::improvePath(
     elapsed_time = now - start_time;
     m_lock.unlock();
     return EXHAUSTED_OPEN_LIST;
+}
+
+void EPASE::beCheckLoop(int tidx)
+{
+    while (!m_terminate)
+    {
+        unique_lock<mutex> locker(m_be_check_lock);
+        m_be_check_cv.wait(locker, [this, tidx](){return (m_be_check_task[tidx] == true);});
+        beCheck(min_edges_, tidx);
+        m_be_check_task[tidx] = false;
+        m_be_check_done_cv.notify_one();
+    }
+
 }
 
 void EPASE::beCheck(std::vector<EdgePtrType>& min_edges, int edge_idx)
