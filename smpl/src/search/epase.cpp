@@ -702,7 +702,7 @@ int EPASE::improvePath(
 
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
-                m_num_be_check+=be_check_threads.size();
+                m_num_be_check+=be_check_threads.size()+1;
 
                 for (auto& min_edge_ptr : min_edges_)
                 {
