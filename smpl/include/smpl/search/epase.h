@@ -339,6 +339,8 @@ private:
     std::vector<int> m_num_expansions_per_thread;
 
     mutable LockType m_lock;
+    mutable LockType m_be_check_lock;
+
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::condition_variable> m_cv_vec;
     std::condition_variable m_cv;
@@ -350,6 +352,15 @@ private:
     // Control variables
     std::atomic<bool> m_recheck_flag;
     std::atomic<bool> m_terminate;
+
+    int m_num_be_check_threads;
+    EdgePtrType m_min_edge_ptr;
+    std::vector<std::vector<size_t>> m_be_check_task_range;
+    std::vector<bool> m_be_check_res;
+    std::vector<std::future<void>> m_be_check_futures;
+    std::condition_variable m_be_check_cv;
+    std::condition_variable m_be_check_done_cv;
+    std::atomic<bool> be_check_res_;
 
     void convertTimeParamsToReplanParams(
         const TimeParameters& t,
@@ -369,6 +380,9 @@ private:
         SearchState* goal_state,
         int& elapsed_expansions,
         clock::duration& elapsed_time);
+
+    void beCheckLoop(int tidx);
+    bool beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx);
 
     void expandEdgeLoop(int thread_id);
     void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
