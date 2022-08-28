@@ -810,7 +810,6 @@ int EPASE::improvePath(
                 unique_lock<mutex> locker(m_lock_vec[thread_id]);
                 auto status = m_edge_expansion_status[thread_id];
                 locker.unlock();                
-                m_cv_vec[thread_id].notify_one();
 
 
                 if (!status)
@@ -825,6 +824,7 @@ int EPASE::improvePath(
                     m_edge_expansion_status[thread_id] = 1;
                     edge_expansion_assigned = true;       
                     locker.unlock();
+                    m_cv_vec[thread_id].notify_one();
                 }
                 else
                     thread_id = thread_id == m_num_threads-1 ? 1 : thread_id+1;
