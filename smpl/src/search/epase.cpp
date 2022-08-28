@@ -633,7 +633,10 @@ int EPASE::improvePath(
     vector<EdgePtrType> popped_edges;
 
     for (auto be_check_tidx = 0; be_check_tidx < m_be_check_futures.size(); be_check_tidx++)
+    {
+        cout << "BE check thread " << be_check_tidx  << " spawned!" << endl;
         m_be_check_futures[be_check_tidx] = async(launch::async, &EPASE::beCheckLoop, this, be_check_tidx);
+    }
 
     m_lock.lock();
 
@@ -678,7 +681,6 @@ int EPASE::improvePath(
                 // Independence check of curr_edge with edges in BE
                 auto t_be_check_s = clock::now();
 
-                vector<thread> be_check_threads;
                 for (auto edge_idx = 1; edge_idx < min_edges_.size(); edge_idx++)
                     m_be_check_task[edge_idx] = true;
 
@@ -702,7 +704,7 @@ int EPASE::improvePath(
 
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
-                m_num_be_check+=be_check_threads.size()+1;
+                m_num_be_check+=m_be_check_futures.size()+1;
 
                 for (auto& min_edge_ptr : min_edges_)
                 {
