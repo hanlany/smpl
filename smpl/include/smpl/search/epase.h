@@ -309,6 +309,7 @@ private:
 
     // Multi-threading members
     int m_num_threads;
+    int m_num_be_check_threads;
     int m_num_state_expansions;
     int m_num_edge_evals;
     int m_num_expand_calls;
@@ -369,7 +370,7 @@ private:
         SearchState* goal_state,
         int& elapsed_expansions,
         clock::duration& elapsed_time);
-
+    void beCheck(std::vector<EdgePtrType>& min_edges, int edge_idx);
     void expandEdgeLoop(int thread_id);
     void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
     void expandEdgesReal(EdgePtrType& state_ptr, std::vector<int>& action_idx_vec, int thread_id);

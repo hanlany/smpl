@@ -611,6 +611,8 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
+    m_num_be_check_threads = 2;
+
 }
 
 // Expand states to improve the current solution until a solution within the
@@ -623,16 +625,18 @@ int EPASE::improvePath(
 {
 
     vector<EdgePtrType> popped_edges;
+    vector<EdgePtrType> min_edges;
+
     m_lock.lock();
 
     while (!m_terminate) 
     {
-        EdgePtrType min_edge_ptr = NULL;
         auto now = clock::now();
         double local_lock_time = 0.0;
         elapsed_time = now - start_time;
+        min_edges.clear();
 
-        while (!min_edge_ptr && !m_terminate)
+        while (min_edges.empty() && !m_terminate)
         {
 
             // cout << "eopen size: " << m_edge_open.size() << endl;
@@ -648,54 +652,67 @@ int EPASE::improvePath(
                 return false;
             }
 
-            while(!min_edge_ptr && !m_edge_open.empty())
+            while(min_edges.empty() && !m_edge_open.empty())
             {
 
-                min_edge_ptr = m_edge_open.min();
-                m_edge_open.pop();
-                popped_edges.emplace_back(min_edge_ptr);
 
-                if (min_edge_ptr->parent_state_ptr->being_expanded)
-                    break;
+                for (int i = 0; (i < m_num_be_check_threads) && (!m_edge_open.empty()); ++i)
+                {
+                    auto min_edge_ptr = m_edge_open.min();
+                    m_edge_open.pop();
+                    popped_edges.emplace_back(min_edge_ptr);
+                    min_edges.emplace_back(min_edge_ptr);
+                    // if (min_edge_ptr->parent_state_ptr->being_expanded)
+                    //     i--;
+                }
             
+
+
+     
+                // getchar();
+
                 // Independence check of curr_edge with edges in BE
                 auto t_be_check_s = clock::now();
-                for (auto& id_state : m_being_expanded_states)
-                {
-                    if (id_state.second != min_edge_ptr->parent_state_ptr)
-                    {
-                        auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
-                        if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
-                        {
-                            min_edge_ptr = NULL;
-                            break;
-                        }
-                    }
-                }
+
+                vector<thread> be_check_threads;
+                vector<bool> be_check_res(min_edges.size(), false);
+
+                for (auto edge_idx = 1; edge_idx < min_edges.size(); edge_idx++)
+                    be_check_threads.emplace_back(thread(&EPASE::beCheck, this, ref(min_edges), edge_idx));
+
+                beCheck(min_edges, 0);
+
+                for (auto& t: be_check_threads)
+                    t.join();
+
+
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                 m_num_be_check++;
 
-                if (min_edge_ptr)
+                for (auto& min_edge_ptr : min_edges)
                 {
-                    // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
-                    auto t_open_check_s = clock::now();
-                    for (auto& popped_edge_ptr : popped_edges)
+                    if (min_edge_ptr)
                     {
-                        if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
+                        // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
+                        auto t_open_check_s = clock::now();
+                        for (auto& popped_edge_ptr : popped_edges)
                         {
-                            auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
-                            if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
+                            if (popped_edge_ptr->parent_state_ptr != min_edge_ptr->parent_state_ptr)
                             {
-                                // state_to_expand_found = false;
-                                min_edge_ptr = NULL;
-                                break;
+                                auto h_diff = computeHeuristic(popped_edge_ptr->parent_state_ptr, min_edge_ptr->parent_state_ptr);
+                                if (min_edge_ptr->parent_state_ptr->g > popped_edge_ptr->parent_state_ptr->g + m_curr_eps*h_diff)
+                                {
+                                    // state_to_expand_found = false;
+                                    min_edge_ptr = NULL;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    auto t_open_check_e = clock::now();
-                    m_open_check_time += to_seconds(t_open_check_e-t_open_check_s);
+                        auto t_open_check_e = clock::now();
+                        m_open_check_time += to_seconds(t_open_check_e-t_open_check_s);
 
+                    }
                 }
             }
 
@@ -704,19 +721,42 @@ int EPASE::improvePath(
             // cout << "m_edge_open size: " << m_edge_open.size() << endl;
             // cout << "min_edge_ptr: " << min_edge_ptr << endl;
 
-            // Re add the popped states except curr state which will be expanded now
+            // Re add the popped states except edges which will be expanded now
             for (auto& popped_edge_ptr : popped_edges)
-            {
-                if (popped_edge_ptr != min_edge_ptr)
+            {                
+                if (find(min_edges.begin(), min_edges.end(), popped_edge_ptr) == min_edges.end())
+                {
                     m_edge_open.push(popped_edge_ptr);
+                }
             }
             
+
+
             m_num_popped_edges += popped_edges.size();
             m_times_popped_edges++;
             
             popped_edges.clear();
 
-            if (!min_edge_ptr)
+            vector<EdgePtrType> min_edges_local;
+            for (auto& min_edge_ptr : min_edges)
+            {
+                if (min_edge_ptr)
+                {
+                    // path to goal found
+                    if (min_edge_ptr->parent_state_ptr->f >= goal_state->f || min_edge_ptr->parent_state_ptr == goal_state) 
+                    {
+                        SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
+                        m_terminate = true;
+                        m_recheck_flag = true;
+                        m_lock.unlock();
+                        return SUCCESS;
+                    }         
+                    min_edges_local.emplace_back(min_edge_ptr);
+                }
+            }           
+            min_edges = min_edges_local;
+
+            if (min_edges.empty())
             {
                 // m_lock.unlock();
                 // auto t_wait_s = clock::now();                
@@ -739,7 +779,7 @@ int EPASE::improvePath(
 
                 m_lock.unlock();
                 unique_lock<mutex> locker(m_lock);
-
+ 
                 auto t_wait_s = clock::now();                
                 m_cv.wait(locker, [this](){return (m_recheck_flag==true);});
                 auto t_wait_e = clock::now();                
@@ -752,16 +792,6 @@ int EPASE::improvePath(
 
                 continue;
             }
-            
-
-            // path to goal found
-            if (min_edge_ptr->parent_state_ptr->f >= goal_state->f || min_edge_ptr->parent_state_ptr == goal_state) {
-                SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
-                m_terminate = true;
-                m_recheck_flag = true;
-                m_lock.unlock();
-                return SUCCESS;
-            }
 
             if (timedOut(elapsed_expansions, elapsed_time)) {
                 SMPL_DEBUG_NAMED(SLOG, "Ran out of time");
@@ -771,72 +801,76 @@ int EPASE::improvePath(
                 return TIMED_OUT;
             }
 
-            if (m_edge_open.empty() && !min_edge_ptr)
+            if (m_edge_open.empty() && min_edges.empty())
                 m_num_open_exhaust_to_find_edge++;
 
         }
 
 
-        // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
-        if (min_edge_ptr->action_idx == -1)
+        for (auto& min_edge_ptr : min_edges)
         {
-            min_edge_ptr->parent_state_ptr->is_visited = true;
-            min_edge_ptr->parent_state_ptr->being_expanded = true;
-            m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
-        }
-
-        auto now_edge_found = clock::now(); 
-        m_edge_find_time += to_seconds(now_edge_found - now) - local_lock_time;
-        m_lock_time_main_thread += local_lock_time;
-        m_num_edge_found++;
-        m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
-        m_be_max_size = max(m_be_max_size, (int)m_being_expanded_states.size());
-        
-        m_lock.unlock();
-
-
-        if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
-
-        if (m_num_threads == 1)
-        {
-            expandEdge(min_edge_ptr, 0);
-        }
-        else
-        {
-            int thread_id = 1;
-            bool edge_expansion_assigned = false;
-            while (!edge_expansion_assigned)
+            // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
+            if (min_edge_ptr->action_idx == -1)
             {
-                unique_lock<mutex> locker(m_lock_vec[thread_id]);
-                auto status = m_edge_expansion_status[thread_id];
-                locker.unlock();                
-                m_cv_vec[thread_id].notify_one();
-
-
-                if (!status)
-                {
-                    if (thread_id >= m_edge_expansion_futures.size())
-                    {
-                        if (1) cout << "Spawning edge expansion thread " << thread_id << endl;
-                        m_edge_expansion_futures.emplace_back(async(launch::async, &EPASE::expandEdgeLoop, this, thread_id));
-                    }
-                    locker.lock();
-                    m_edge_expansion_vec[thread_id] = min_edge_ptr;
-                    m_edge_expansion_status[thread_id] = 1;
-                    edge_expansion_assigned = true;       
-                    locker.unlock();
-                }
-                else
-                    thread_id = thread_id == m_num_threads-1 ? 1 : thread_id+1;
-
+                min_edge_ptr->parent_state_ptr->is_visited = true;
+                min_edge_ptr->parent_state_ptr->being_expanded = true;
+                m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
             }
+
+            auto now_edge_found = clock::now(); 
+            m_edge_find_time += to_seconds(now_edge_found - now) - local_lock_time;
+            m_lock_time_main_thread += local_lock_time;
+            m_num_edge_found++;
+            m_edge_open_max_size = max(m_edge_open_max_size, (int)m_edge_open.size());
+            m_be_max_size = max(m_be_max_size, (int)m_being_expanded_states.size());
+            
+            m_lock.unlock();
+
+            if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
+
+            if (m_num_threads == 1)
+            {
+                expandEdge(min_edge_ptr, 0);
+            }
+            else
+            {
+                int thread_id = 1;
+                bool edge_expansion_assigned = false;
+                while (!edge_expansion_assigned)
+                {
+                    unique_lock<mutex> locker(m_lock_vec[thread_id]);
+                    auto status = m_edge_expansion_status[thread_id];
+                    locker.unlock();                
+
+
+                    if (!status)
+                    {
+                        if (thread_id >= m_edge_expansion_futures.size())
+                        {
+                            if (1) cout << "Spawning edge expansion thread " << thread_id << endl;
+                            m_edge_expansion_futures.emplace_back(async(launch::async, &EPASE::expandEdgeLoop, this, thread_id));
+                        }
+                        locker.lock();
+                        m_edge_expansion_vec[thread_id] = min_edge_ptr;
+                        m_edge_expansion_status[thread_id] = 1;
+                        edge_expansion_assigned = true;    
+                        locker.unlock();
+                        m_cv_vec[thread_id].notify_one();
+                    }
+                    else
+                        thread_id = thread_id == m_num_threads-1-(m_num_be_check_threads-1) ? 1 : thread_id+1;
+
+                }
+            }
+    
+            auto t_lock_s = clock::now();
+            m_lock.lock();
+            auto t_lock_e = clock::now();
+            // m_lock_time += to_seconds(t_lock_e - t_lock_s);
+            elapsed_expansions = m_num_state_expansions; 
         }
 
-        auto t_lock_s = clock::now();
-        m_lock.lock();
-        auto t_lock_e = clock::now();
-        // m_lock_time += to_seconds(t_lock_e - t_lock_s);
-        elapsed_expansions = m_num_state_expansions; 
+
     }
 
     m_terminate = true;
@@ -844,6 +878,24 @@ int EPASE::improvePath(
     elapsed_time = now - start_time;
     m_lock.unlock();
     return EXHAUSTED_OPEN_LIST;
+}
+
+void EPASE::beCheck(std::vector<EdgePtrType>& min_edges, int edge_idx)
+{
+    for (auto& id_state : m_being_expanded_states)
+    {
+        if (id_state.second != min_edges[edge_idx]->parent_state_ptr)
+        {
+            auto h_diff = computeHeuristic(id_state.second, min_edges[edge_idx]->parent_state_ptr);
+            if (min_edges[edge_idx]->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
+            {
+                // id_state.second->Print("BE failing state ");
+                // min_edges[edge_idx]->Print("Failing edge ");
+                min_edges[edge_idx] = NULL;
+                break;
+            }
+        }
+    }
 }
 
 void EPASE::expandEdgeLoop(int thread_id)
@@ -1156,12 +1208,11 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
 
     if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
     {
-        edge_ptr->parent_state_ptr->Print();
+        edge_ptr->parent_state_ptr->Print("Num expanded more than num successors");
         throw runtime_error("Number of expanded edges cannot be greater than number of successors");
     }
 
     m_recheck_flag = true;
-
     auto t_end = clock::now(); 
     m_expansions_time += to_seconds(t_end - t_start);
 
