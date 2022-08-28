@@ -611,7 +611,7 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
-    m_num_be_check_threads = 2;
+    m_num_be_check_threads = 1;
 
 }
 
@@ -675,8 +675,6 @@ int EPASE::improvePath(
                 auto t_be_check_s = clock::now();
 
                 vector<thread> be_check_threads;
-                vector<bool> be_check_res(min_edges.size(), false);
-
                 for (auto edge_idx = 1; edge_idx < min_edges.size(); edge_idx++)
                     be_check_threads.emplace_back(thread(&EPASE::beCheck, this, ref(min_edges), edge_idx));
 
@@ -688,7 +686,7 @@ int EPASE::improvePath(
 
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
-                m_num_be_check++;
+                m_num_be_check+=be_check_threads.size();
 
                 for (auto& min_edge_ptr : min_edges)
                 {
@@ -708,6 +706,10 @@ int EPASE::improvePath(
                                     break;
                                 }
                             }
+                            
+                            // Only check against popped edges in front of min_edge
+                            if (min_edge_ptr == popped_edge_ptr)
+                                break;
                         }
                         auto t_open_check_e = clock::now();
                         m_open_check_time += to_seconds(t_open_check_e-t_open_check_s);
@@ -858,7 +860,10 @@ int EPASE::improvePath(
                         m_cv_vec[thread_id].notify_one();
                     }
                     else
-                        thread_id = thread_id == m_num_threads-1-(m_num_be_check_threads-1) ? 1 : thread_id+1;
+                    {
+                        // thread_id = thread_id == m_num_threads-1-(m_num_be_check_threads-1) ? 1 : thread_id+1;
+                        thread_id = thread_id == m_num_threads-1 ? 1 : thread_id+1;                    
+                    }
 
                 }
             }
