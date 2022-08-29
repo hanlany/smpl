@@ -281,6 +281,10 @@ int EPASE::replan(
     cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
     cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
     cout << "Average expensive GetSucc time: " << m_exp_get_succ_time/m_num_exp_expansions << endl;
+
+    for (auto tidx = 0; tidx < m_be_check_thread_jobs.size(); ++tidx)
+        cout << "BE check thread: " << tidx << " jobs: " << m_be_check_thread_jobs[tidx] << endl;
+
     cout << endl << "------------- Expansions per thread -------------" << endl;
     for (int tidx = 0; tidx < m_num_threads; ++tidx)
         cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
@@ -626,6 +630,8 @@ void EPASE::initialize()
     m_be_check_lock_vec = move(vector<LockType>(m_num_be_check_threads));
     m_be_check_cv_vec = move(vector<condition_variable>(m_num_be_check_threads));
     m_be_check_cv_vec_out = move(vector<condition_variable>(m_num_be_check_threads));
+    m_be_check_thread_jobs.clear();
+    m_be_check_thread_jobs.resize(m_num_be_check_threads);
 
 }
 
@@ -920,7 +926,7 @@ void EPASE::beCheckLoop(int tidx)
 
         // cout << "be check thread " << tidx << " awakes " << endl;
             
-        auto res = beCheck(m_min_edge_ptr, m_be_check_task_range[tidx][0], m_be_check_task_range[tidx][1]);
+        auto res = beCheck(m_min_edge_ptr, m_be_check_task_range[tidx][0], m_be_check_task_range[tidx][1], tidx);
 
 
         // m_be_check_res[tidx] = res;
@@ -940,7 +946,7 @@ void EPASE::beCheckLoop(int tidx)
 
 }
 
-bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
+bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx, int tidx)
 {
     
     size_t idx = 0;
@@ -952,7 +958,10 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
         for (auto it = m_being_expanded_states.begin(curr_bucket); it != m_being_expanded_states.end(curr_bucket); ++it)
         {
             if (!be_check_res_) 
+            {
+                if (tidx != -1) m_be_check_thread_jobs[tidx]+=idx; 
                 return false;
+            }
             
             if (it->second != min_edge_ptr->parent_state_ptr)
             {
@@ -965,7 +974,8 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
                     // min_edge_ptr->Print("Failing edge ");
                 // cout  << "false num checks: " << idx  << endl;
 
-                    return false;
+                   if (tidx != -1) m_be_check_thread_jobs[tidx]+=idx; 
+                   return false;
                 }
             }            
 
@@ -976,6 +986,7 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
 
 
     // cout  << "num checks: " << idx  << endl;
+    if (tidx != -1) m_be_check_thread_jobs[tidx]+=idx; 
     return true;
 }
 

@@ -360,6 +360,7 @@ private:
     std::vector<std::future<void>> m_be_check_futures;
     std::vector<std::condition_variable> m_be_check_cv_vec;
     std::vector<std::condition_variable> m_be_check_cv_vec_out;
+    std::vector<int> m_be_check_thread_jobs;
 
     // std::condition_variable m_be_check_done_cv;
     std::atomic<bool> be_check_res_;
@@ -385,7 +386,7 @@ private:
         clock::duration& elapsed_time);
 
     void beCheckLoop(int tidx);
-    bool beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx);
+    bool beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx, int tidx=-1);
 
     void expandEdgeLoop(int thread_id);
     void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
