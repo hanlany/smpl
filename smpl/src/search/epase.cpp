@@ -618,8 +618,8 @@ void EPASE::initialize()
     m_be_check_task_range.clear();
     m_be_check_task_range.resize(m_num_be_check_threads);
 
-    m_be_check_res.clear();
-    m_be_check_res.resize(m_num_be_check_threads);
+    // m_be_check_res.clear();
+    // m_be_check_res.resize(m_num_be_check_threads);
 
     m_min_edge_ptr = NULL;
     be_check_res_ = true;
@@ -753,6 +753,7 @@ int EPASE::improvePath(
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                 m_num_be_check++;
 
+                // cout << "BE size: " << m_being_expanded_states.size() << " time (ms): " << m_be_check_time*1e3 << endl;
                 if (m_min_edge_ptr)
                 {
                     // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
@@ -906,19 +907,24 @@ void EPASE::beCheckLoop(int tidx)
     {
  
         {
-            // cout << "be check thread " << tidx << " waits on lock to sleep " << endl;
-
             unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
-            // cout << "be check thread " << tidx << " sleeps " << endl;
             m_be_check_cv_vec[tidx].wait(locker, [this, tidx](){return (!m_be_check_task_range[tidx].empty());});
-
         }
-        // cout << "be check thread " << tidx << " awakes " << endl;
+
+        // bool task = false;
+        // while (!task)
+        // {
+        //     unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
+        //     task = !m_be_check_task_range[tidx].empty();
+        // }
+
+
+        cout << "be check thread " << tidx << " awakes " << endl;
             
         auto res = beCheck(m_min_edge_ptr, m_be_check_task_range[tidx][0], m_be_check_task_range[tidx][1]);
 
 
-        m_be_check_res[tidx] = res;
+        // m_be_check_res[tidx] = res;
     
         if (!res)
             be_check_res_ = res;
@@ -938,6 +944,7 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
 {
     
     size_t idx = 0;
+
     for (auto& id_state : m_being_expanded_states)
     {
         if (!be_check_res_) return false;
@@ -956,11 +963,14 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
                     return false;
                 }
             }            
-        } 
+        }
+        else if (idx >= end_idx)
+            break;
 
         idx++;
     }
 
+    // cout  << "num checks: " << idx  << endl;
     return true;
 }
 
