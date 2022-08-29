@@ -611,7 +611,7 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
-    m_num_be_check_threads = 1;
+    m_num_be_check_threads = 3;
     m_be_check_futures.clear();    
     m_be_check_futures.resize(m_num_be_check_threads);
 
@@ -693,17 +693,17 @@ int EPASE::improvePath(
                 {
 
                     size_t start = 0;
-                    size_t end = m_being_expanded_states.size();
+                    size_t end = m_being_expanded_states.bucket_count();
                     size_t chunk = (end - start + (m_num_be_check_threads - 1))/m_num_be_check_threads ;
                     
-                    // cout << "m_being_expanded_states size: " << m_being_expanded_states.size() << endl;
+                    // cout << "m_being_expanded_states size: " << m_being_expanded_states.size() << "num buckets: " <<   m_being_expanded_states.bucket_count() << endl;
 
                     for (auto be_check_tidx = 0; be_check_tidx < m_num_be_check_threads; be_check_tidx++)
                     {
                         size_t s = start + be_check_tidx * chunk;
                         size_t e =  min(s + chunk, end);
 
-                        if (s>e)
+                        if (s>=e)
                             break;
 
                         // cout << "Assigning: " << s << ":" << e << " to thread: " << be_check_tidx << endl;  
@@ -722,6 +722,7 @@ int EPASE::improvePath(
                         unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
                         m_be_check_cv_vec_out[be_check_tidx].wait(locker, [this, &be_check_tidx](){return m_be_check_task_range[be_check_tidx].empty();});
                     }
+
 
 
                     // cout << "wAITING" << endl;
@@ -943,29 +944,28 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
     
     size_t idx = 0;
 
-    for (auto& id_state : m_being_expanded_states)
+    for (auto it = m_being_expanded_states.begin(start_idx); it != m_being_expanded_states.end(end_idx-1); ++it)
     {
-        if (!be_check_res_) return false;
-
-        if ((idx >= start_idx) && (idx < end_idx))
+        if (!be_check_res_) 
         {
-            if (id_state.second != min_edge_ptr->parent_state_ptr)
-            {
-                auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
-                // cout << "Check " << idx << " done on thread " << endl;
-                // id_state.second->Print("BE ");
-                if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
-                {
-                    // id_state.second->Print("BE failing state ");
-                    // min_edge_ptr->Print("Failing edge ");
-                    return false;
-                }
-            }            
+            cout << "Early termination" << endl;
+            return false;
         }
-        else if (idx >= end_idx)
-            break;
+        
+        if (it->second != min_edge_ptr->parent_state_ptr)
+        {
+            auto h_diff = computeHeuristic(it->second, min_edge_ptr->parent_state_ptr);
+            // cout << "Check " << idx << " done on thread " << endl;
+            // it->second->Print("BE ");
+            if (min_edge_ptr->parent_state_ptr->g > it->second->g + m_curr_eps*h_diff)
+            {
+                // it->second->Print("BE failing state ");
+                // min_edge_ptr->Print("Failing edge ");
+                return false;
+            }
+        }            
 
-        idx++;
+        // idx++;
     }
 
     // cout  << "num checks: " << idx  << endl;
