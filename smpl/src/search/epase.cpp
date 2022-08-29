@@ -631,7 +631,7 @@ void EPASE::initialize()
     m_be_check_cv_vec = move(vector<condition_variable>(m_num_be_check_threads));
     m_be_check_cv_vec_out = move(vector<condition_variable>(m_num_be_check_threads));
     m_be_check_thread_jobs.clear();
-    m_be_check_thread_jobs.resize(m_num_be_check_threads);
+    m_be_check_thread_jobs.resize(m_num_be_check_threads, 0);
 
 }
 
