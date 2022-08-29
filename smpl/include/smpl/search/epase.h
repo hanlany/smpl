@@ -359,6 +359,8 @@ private:
     std::vector<bool> m_be_check_res;
     std::vector<std::future<void>> m_be_check_futures;
     std::vector<std::condition_variable> m_be_check_cv_vec;
+    std::vector<std::condition_variable> m_be_check_cv_vec_out;
+
     // std::condition_variable m_be_check_done_cv;
     std::atomic<bool> be_check_res_;
     mutable std::vector<LockType> m_be_check_lock_vec;

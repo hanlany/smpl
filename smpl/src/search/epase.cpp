@@ -611,7 +611,7 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
-    m_num_be_check_threads = 3;
+    m_num_be_check_threads = 1;
     m_be_check_futures.clear();    
     m_be_check_futures.resize(m_num_be_check_threads);
 
@@ -625,6 +625,8 @@ void EPASE::initialize()
     be_check_res_ = true;
     m_be_check_lock_vec = move(vector<LockType>(m_num_be_check_threads));
     m_be_check_cv_vec = move(vector<condition_variable>(m_num_be_check_threads));
+    m_be_check_cv_vec_out = move(vector<condition_variable>(m_num_be_check_threads));
+
 }
 
 // Expand states to improve the current solution until a solution within the
@@ -714,34 +716,29 @@ int EPASE::improvePath(
 
 
 
-                    // // Wait for all BE  tasks to be done
-                    // auto be_done_fptr = [this](){
-                    //     bool all_done = true; 
-                    //     for (const auto& r : m_be_check_task_range)
-                    //         all_done = all_done && r.empty();
-                    //     return all_done;
-                    //         };
-
-
-                    // unique_lock<mutex> locker(m_be_check_lock);
-                    // m_be_check_done_cv.wait(locker, be_done_fptr);
+                    // Wait for all BE  tasks to be done
+                    for (int be_check_tidx = 0; be_check_tidx < m_be_check_task_range.size(); ++be_check_tidx)
+                    {
+                        unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
+                        m_be_check_cv_vec_out[be_check_tidx].wait(locker, [this, &be_check_tidx](){return m_be_check_task_range[be_check_tidx].empty();});
+                    }
 
 
                     // cout << "wAITING" << endl;
-                    bool all_done = false;
-                    while (!all_done)
-                    {
-                        all_done = true;
-                        for (int be_check_tidx = 0; be_check_tidx <  m_be_check_task_range.size(); ++be_check_tidx)
-                        {
-                            unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
-                            if (!m_be_check_task_range[be_check_tidx].empty())
-                            {
-                                all_done = false;
-                                break;
-                            }
-                        }
-                    }
+                    // bool all_done = false;
+                    // while (!all_done)
+                    // {
+                    //     all_done = true;
+                    //     for (int be_check_tidx = 0; be_check_tidx <  m_be_check_task_range.size(); ++be_check_tidx)
+                    //     {
+                    //         unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
+                    //         if (!m_be_check_task_range[be_check_tidx].empty())
+                    //         {
+                    //             all_done = false;
+                    //             break;
+                    //         }
+                    //     }
+                    // }
                     // cout << "Done waiting" << endl;
 
                 }
@@ -919,7 +916,7 @@ void EPASE::beCheckLoop(int tidx)
         // }
 
 
-        cout << "be check thread " << tidx << " awakes " << endl;
+        // cout << "be check thread " << tidx << " awakes " << endl;
             
         auto res = beCheck(m_min_edge_ptr, m_be_check_task_range[tidx][0], m_be_check_task_range[tidx][1]);
 
@@ -932,6 +929,7 @@ void EPASE::beCheckLoop(int tidx)
         // cout << "be check thread " << tidx << " waiting on lock " << endl; 
         unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
         m_be_check_task_range[tidx].clear();
+        m_be_check_cv_vec_out[tidx].notify_one();
 
         // cout << "Clearing " << tidx << " m_be_check_task_range[tidx]: " << m_be_check_task_range[tidx].size() << endl;
 
