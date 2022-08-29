@@ -358,9 +358,10 @@ private:
     std::vector<std::vector<size_t>> m_be_check_task_range;
     std::vector<bool> m_be_check_res;
     std::vector<std::future<void>> m_be_check_futures;
-    std::condition_variable m_be_check_cv;
-    std::condition_variable m_be_check_done_cv;
+    std::vector<std::condition_variable> m_be_check_cv_vec;
+    // std::condition_variable m_be_check_done_cv;
     std::atomic<bool> be_check_res_;
+    mutable std::vector<LockType> m_be_check_lock_vec;
 
     void convertTimeParamsToReplanParams(
         const TimeParameters& t,

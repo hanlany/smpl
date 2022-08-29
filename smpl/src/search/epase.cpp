@@ -611,7 +611,7 @@ void EPASE::initialize()
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
-    m_num_be_check_threads = 0;
+    m_num_be_check_threads = 3;
     m_be_check_futures.clear();    
     m_be_check_futures.resize(m_num_be_check_threads);
 
@@ -623,6 +623,8 @@ void EPASE::initialize()
 
     m_min_edge_ptr = NULL;
     be_check_res_ = true;
+    m_be_check_lock_vec = move(vector<LockType>(m_num_be_check_threads));
+    m_be_check_cv_vec = move(vector<condition_variable>(m_num_be_check_threads));
 }
 
 // Expand states to improve the current solution until a solution within the
@@ -679,6 +681,7 @@ int EPASE::improvePath(
                 // Independence check of curr_edge with edges in BE
                 auto t_be_check_s = clock::now();
                 
+                be_check_res_ = true;
 
                 if (m_num_be_check_threads == 0)
                 {
@@ -687,14 +690,11 @@ int EPASE::improvePath(
                 else
                 {
 
-                    cout << "HEREEEEEEEEEEEEEEEEEe" << endl;
-
-
-                    be_check_res_ = true;
                     size_t start = 0;
                     size_t end = m_being_expanded_states.size();
                     size_t chunk = (end - start + (m_num_be_check_threads - 1))/m_num_be_check_threads ;
                     
+                    // cout << "m_being_expanded_states size: " << m_being_expanded_states.size() << endl;
 
                     for (auto be_check_tidx = 0; be_check_tidx < m_num_be_check_threads; be_check_tidx++)
                     {
@@ -704,26 +704,45 @@ int EPASE::improvePath(
                         if (s>e)
                             break;
 
+                        // cout << "Assigning: " << s << ":" << e << " to thread: " << be_check_tidx << endl;  
+
+                        unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
                         m_be_check_task_range[be_check_tidx] = {s, e};
+                        m_be_check_cv_vec[be_check_tidx].notify_one();
                     }
 
 
-                    m_be_check_cv.notify_all();
 
 
-                    // Wait for all BE  tasks to be done
-                    auto be_done_fptr = [this](){
-                        bool all_done = true; 
-                        for (const auto& r : m_be_check_task_range)
-                            all_done = all_done && r.empty();
-                        return all_done;
-                            };
+                    // // Wait for all BE  tasks to be done
+                    // auto be_done_fptr = [this](){
+                    //     bool all_done = true; 
+                    //     for (const auto& r : m_be_check_task_range)
+                    //         all_done = all_done && r.empty();
+                    //     return all_done;
+                    //         };
 
 
-                    unique_lock<mutex> locker(m_be_check_lock);
-                    m_be_check_done_cv.wait(locker, be_done_fptr);
+                    // unique_lock<mutex> locker(m_be_check_lock);
+                    // m_be_check_done_cv.wait(locker, be_done_fptr);
 
 
+                    // cout << "wAITING" << endl;
+                    bool all_done = false;
+                    while (!all_done)
+                    {
+                        all_done = true;
+                        for (int be_check_tidx = 0; be_check_tidx <  m_be_check_task_range.size(); ++be_check_tidx)
+                        {
+                            unique_lock<mutex> locker(m_be_check_lock_vec[be_check_tidx]);
+                            if (!m_be_check_task_range[be_check_tidx].empty())
+                            {
+                                all_done = false;
+                                break;
+                            }
+                        }
+                    }
+                    // cout << "Done waiting" << endl;
 
                 }
 
@@ -880,22 +899,37 @@ int EPASE::improvePath(
     return EXHAUSTED_OPEN_LIST;
 }
 
+
 void EPASE::beCheckLoop(int tidx)
 {
     while (!m_terminate)
     {
-        unique_lock<mutex> locker(m_be_check_lock);
-        m_be_check_cv.wait(locker, [this, tidx](){return (!m_be_check_task_range[tidx].empty());});
-        
+ 
+        {
+            // cout << "be check thread " << tidx << " waits on lock to sleep " << endl;
 
+            unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
+            // cout << "be check thread " << tidx << " sleeps " << endl;
+            m_be_check_cv_vec[tidx].wait(locker, [this, tidx](){return (!m_be_check_task_range[tidx].empty());});
+
+        }
+        // cout << "be check thread " << tidx << " awakes " << endl;
+            
         auto res = beCheck(m_min_edge_ptr, m_be_check_task_range[tidx][0], m_be_check_task_range[tidx][1]);
-        m_be_check_task_range[tidx].clear();
+
+
         m_be_check_res[tidx] = res;
     
         if (!res)
             be_check_res_ = res;
-    
-        m_be_check_done_cv.notify_one();
+
+        // cout << "be check thread " << tidx << " waiting on lock " << endl; 
+        unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
+        m_be_check_task_range[tidx].clear();
+
+        // cout << "Clearing " << tidx << " m_be_check_task_range[tidx]: " << m_be_check_task_range[tidx].size() << endl;
+
+        // m_be_check_done_cv.notify_one();
     }
 
 }
@@ -913,6 +947,8 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
             if (id_state.second != min_edge_ptr->parent_state_ptr)
             {
                 auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                // cout << "Check " << idx << " done on thread " << endl;
+                // id_state.second->Print("BE ");
                 if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
                 {
                     // id_state.second->Print("BE failing state ");
