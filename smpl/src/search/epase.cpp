@@ -752,6 +752,7 @@ int EPASE::improvePath(
                 m_num_be_check++;
 
                 // cout << "BE size: " << m_being_expanded_states.size() << " time (ms): " << m_be_check_time*1e3 << endl;
+
                 if (m_min_edge_ptr)
                 {
                     // Independence check of curr_edge with edges in OPEN that are in front of curr_edge
@@ -944,29 +945,35 @@ bool EPASE::beCheck(EdgePtrType& min_edge_ptr, size_t start_idx, size_t end_idx)
     
     size_t idx = 0;
 
-    for (auto it = m_being_expanded_states.begin(start_idx); it != m_being_expanded_states.end(end_idx-1); ++it)
-    {
-        if (!be_check_res_) 
-        {
-            cout << "Early termination" << endl;
-            return false;
-        }
-        
-        if (it->second != min_edge_ptr->parent_state_ptr)
-        {
-            auto h_diff = computeHeuristic(it->second, min_edge_ptr->parent_state_ptr);
-            // cout << "Check " << idx << " done on thread " << endl;
-            // it->second->Print("BE ");
-            if (min_edge_ptr->parent_state_ptr->g > it->second->g + m_curr_eps*h_diff)
-            {
-                // it->second->Print("BE failing state ");
-                // min_edge_ptr->Print("Failing edge ");
-                return false;
-            }
-        }            
+    auto curr_bucket = start_idx;
 
-        // idx++;
+    for (auto curr_bucket = start_idx; curr_bucket < end_idx; curr_bucket++)
+    {
+        for (auto it = m_being_expanded_states.begin(curr_bucket); it != m_being_expanded_states.end(curr_bucket); ++it)
+        {
+            if (!be_check_res_) 
+                return false;
+            
+            if (it->second != min_edge_ptr->parent_state_ptr)
+            {
+                auto h_diff = computeHeuristic(it->second, min_edge_ptr->parent_state_ptr);
+                // cout << "Check " << idx << " done on thread " << endl;
+                // it->second->Print("BE ");
+                if (min_edge_ptr->parent_state_ptr->g > it->second->g + m_curr_eps*h_diff)
+                {
+                    // it->second->Print("BE failing state ");
+                    // min_edge_ptr->Print("Failing edge ");
+                // cout  << "false num checks: " << idx  << endl;
+
+                    return false;
+                }
+            }            
+
+            idx++;
+            // cout << "idx: " << idx << endl;
+        }    
     }
+
 
     // cout  << "num checks: " << idx  << endl;
     return true;
