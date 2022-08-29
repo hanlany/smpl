@@ -340,7 +340,7 @@ private:
     std::vector<int> m_num_expansions_per_thread;
 
     mutable LockType m_lock;
-    mutable LockType m_be_check_lock;
+    mutable std::vector<LockType> m_be_check_lock_vec;
     mutable std::vector<LockType> m_lock_vec; 
     std::vector<std::condition_variable> m_cv_vec;
     std::condition_variable m_cv;
@@ -351,7 +351,7 @@ private:
     std::vector<int> m_edge_expansion_status;
     std::vector<EdgePtrType> min_edges_;
     std::vector<bool> m_be_check_task;
-    std::condition_variable m_be_check_cv;
+    std::vector<std::condition_variable> m_be_check_cv_vec;
     std::condition_variable m_be_check_done_cv;
 
 

@@ -42,7 +42,7 @@
 #include <smpl/time.h>
 #include <smpl/console/console.h>
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 using namespace std;
 
@@ -613,12 +613,16 @@ void EPASE::initialize()
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
 
     m_num_be_check_threads = 3;
+
+    m_be_check_lock_vec = move(vector<LockType>(m_num_be_check_threads));
+    m_be_check_cv_vec = move(vector<condition_variable>(m_num_be_check_threads));
+
     m_be_check_futures.clear();
-    m_be_check_futures.resize(m_num_be_check_threads-1);
+    m_be_check_futures.resize(m_num_be_check_threads);
 
     min_edges_.clear();
     m_be_check_task.clear();
-    m_be_check_task.resize(m_num_be_check_threads-1);
+    m_be_check_task.resize(m_num_be_check_threads);
 }
 
 // Expand states to improve the current solution until a solution within the
@@ -632,7 +636,7 @@ int EPASE::improvePath(
 
     vector<EdgePtrType> popped_edges;
 
-    for (auto be_check_tidx = 0; be_check_tidx < m_be_check_futures.size(); be_check_tidx++)
+    for (auto be_check_tidx = 1; be_check_tidx < m_be_check_futures.size(); be_check_tidx++)
     {
         cout << "BE check thread " << be_check_tidx  << " spawned!" << endl;
         m_be_check_futures[be_check_tidx] = async(launch::async, &EPASE::beCheckLoop, this, be_check_tidx);
@@ -682,25 +686,44 @@ int EPASE::improvePath(
                 auto t_be_check_s = clock::now();
 
                 for (auto edge_idx = 1; edge_idx < min_edges_.size(); edge_idx++)
+                {
                     m_be_check_task[edge_idx] = true;
-
-                m_be_check_cv.notify_all();
+                    cout << "assigning: " << edge_idx << endl;
+                    m_be_check_cv_vec[edge_idx].notify_one();
+                }
 
 
                 beCheck(min_edges_, 0);
 
-                // Wait for all BE check tasks to be done
-                auto be_done_fptr = [this](){
-                    bool all_done = true; 
-                    for (const auto& b : m_be_check_task)
-                        all_done = all_done && (!b);
-                    return all_done;
-                        };
+                // // Wait for all BE check tasks to be done
+                // auto be_done_fptr = [this](){
+                //     bool all_done = true; 
+                //     for (const auto& b : m_be_check_task)
+                //         all_done = all_done && (!b);
+                //     return all_done;
+                //         };
 
 
-                unique_lock<mutex> locker(m_be_check_lock);
-                m_be_check_done_cv.wait(locker, be_done_fptr);
+                // unique_lock<mutex> locker(m_be_check_lock);
+                // m_be_check_done_cv.wait(locker, be_done_fptr);
 
+                bool all_done = false;
+                while (!all_done)
+                {
+                    all_done = true;
+                    for (int edge_idx = 1; edge_idx <  min_edges_.size(); ++edge_idx)
+                    {
+                        cout << "Waiting for lock: " << edge_idx << endl;
+                        unique_lock<mutex> locker(m_be_check_lock_vec[edge_idx]);
+                        cout << "Got lock: " << edge_idx << endl;
+                        if (m_be_check_task[edge_idx])
+                        {
+                            all_done = false;
+                            cout << "edge_idx  not done: " << edge_idx << endl;
+                            break;
+                        }
+                    }
+                }
 
                 auto t_be_check_e = clock::now();
                 m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
@@ -888,11 +911,18 @@ void EPASE::beCheckLoop(int tidx)
 {
     while (!m_terminate)
     {
-        unique_lock<mutex> locker(m_be_check_lock);
-        m_be_check_cv.wait(locker, [this, tidx](){return (m_be_check_task[tidx] == true);});
+        {
+            unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
+            m_be_check_cv_vec[tidx].wait(locker, [this, tidx](){return (m_be_check_task[tidx] == true);});
+        }
+
         beCheck(min_edges_, tidx);
+        
+        unique_lock<mutex> locker(m_be_check_lock_vec[tidx]);
         m_be_check_task[tidx] = false;
-        m_be_check_done_cv.notify_one();
+
+
+        // m_be_check_done_cv.notify_one();
     }
 
 }
