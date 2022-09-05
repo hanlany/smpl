@@ -1047,11 +1047,10 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
             {
          
 
-                if (succ_state->is_visited)
-                {
-                    succ_state->Print("Re-expanding proxy edge");
-                    // getchar();  
-                }
+                // if (succ_state->is_visited)
+                // {
+                //     succ_state->Print("Re-expanding proxy edge");
+                // }
 
                 succ_state->g = new_cost;
                 succ_state->bp = edge_ptr->parent_state_ptr;
