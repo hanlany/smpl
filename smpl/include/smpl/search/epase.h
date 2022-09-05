@@ -191,7 +191,7 @@ private:
         unsigned short call_number;
         SearchState* bp;
         bool incons;
-        std::atomic<bool> is_visited{false};
+        std::atomic<int> is_visited{0};
         std::atomic<bool> being_expanded{false};
         std::atomic<int> num_successors{0};
         std::atomic<int> num_expanded_successors{0};
@@ -324,6 +324,7 @@ private:
     int m_times_popped_edges;
     int m_wait_num;
     int m_num_be_check;
+    bool m_reexpand;
 
     double m_edge_find_time;
     double m_expansions_time;
@@ -371,8 +372,9 @@ private:
         clock::duration& elapsed_time);
 
     void expandEdgeLoop(int thread_id);
-    void expandEdgeReal(EdgePtrType edge_ptr, int thread_id);
-    void expandEdgesReal(EdgePtrType& state_ptr, std::vector<int>& action_idx_vec, int thread_id);
+    void reexpandEdge(EdgePtrType edge_ptr);
+    void expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id);
+    void expandCheapEdges(EdgePtrType& state_ptr, std::vector<int>& action_idx_vec, int thread_id);
     void expandEdge(EdgePtrType& edge_ptr, int thread_id);
 
     void recomputeHeuristics();
