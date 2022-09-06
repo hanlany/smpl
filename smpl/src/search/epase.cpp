@@ -580,7 +580,7 @@ void EPASE::initialize()
     m_times_popped_edges = 0;
     m_wait_num = 0;
     m_num_be_check = 0;
-    m_reexpand = true;
+    m_reexpand = false;
 
     m_edge_find_time = 0.0;
     m_num_edge_found = 0;
@@ -624,6 +624,8 @@ int EPASE::improvePath(
 {
 
     vector<EdgePtrType> popped_edges;
+    vector<StatePtrType> popped_be_states;
+
     m_lock.lock();
 
     while (!m_terminate) 
@@ -664,18 +666,57 @@ int EPASE::improvePath(
                 
                     // Independence check of curr_edge with edges in BE
                     auto t_be_check_s = clock::now();
-                    for (auto& id_state : m_being_expanded_states)
+
+
+                    // for (auto& id_state : m_being_expanded_states)
+                    // {
+                    //     if (id_state != min_edge_ptr->parent_state_ptr)
+                    //     {
+                    //         auto h_diff = computeHeuristic(id_state, min_edge_ptr->parent_state_ptr);
+                    //         if (min_edge_ptr->parent_state_ptr->g > id_state->g + m_curr_eps*h_diff)
+                    //         {
+                    //             min_edge_ptr = NULL;
+                    //             break;
+                    //         }
+                    //     }
+                    // }
+    
+                    // cout << "**************" << endl;
+                    // min_edge_ptr->parent_state_ptr->Print("Considering state");
+                    while (!m_being_expanded_states.empty())
                     {
-                        if (id_state.second != min_edge_ptr->parent_state_ptr)
+
+                        auto popped_be_state = m_being_expanded_states.min();
+
+                        // popped_be_state->Print();
+
+                        if (popped_be_state->f >= min_edge_ptr->parent_state_ptr->f)
+                            break;
+
+                        if (popped_be_state != min_edge_ptr->parent_state_ptr)
                         {
-                            auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
-                            if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
+                            auto h_diff = computeHeuristic(popped_be_state, min_edge_ptr->parent_state_ptr);
+
+                            if (min_edge_ptr->parent_state_ptr->g > popped_be_state->g + m_curr_eps*h_diff)
                             {
                                 min_edge_ptr = NULL;
                                 break;
                             }
+
+                            m_being_expanded_states.pop();
+                            popped_be_states.emplace_back(popped_be_state);
+                            
                         }
                     }
+
+                    // cout << "**************" << endl;
+                    // getchar();
+
+                    for (const auto& popped_be_state: popped_be_states)
+                        m_being_expanded_states.push(popped_be_state);
+
+                    popped_be_states.clear();
+
                     auto t_be_check_e = clock::now();
                     m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                     m_num_be_check++;
@@ -770,7 +811,8 @@ int EPASE::improvePath(
         {
             min_edge_ptr->parent_state_ptr->is_visited += 1;
             min_edge_ptr->parent_state_ptr->being_expanded = true;
-            m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
+            // m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
+            m_being_expanded_states.push(min_edge_ptr->parent_state_ptr);
         }
 
         auto now_edge_found = clock::now(); 
@@ -1260,12 +1302,13 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
         {
             edge_ptr->parent_state_ptr->being_expanded = false;
-            auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
-            if (it_state_be != m_being_expanded_states.end())
-            {
-                m_being_expanded_states.erase(it_state_be);
-                // m_num_state_expansions += 1;
-            }
+            
+            if (m_being_expanded_states.contains(edge_ptr->parent_state_ptr))
+                m_being_expanded_states.erase(edge_ptr->parent_state_ptr);
+
+            // auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
+            // if (it_state_be != m_being_expanded_states.end())
+            //     m_being_expanded_states.erase(it_state_be);
         }
 
         if (edge_ptr->parent_state_ptr->num_expanded_successors > edge_ptr->parent_state_ptr->num_successors)
