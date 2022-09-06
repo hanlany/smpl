@@ -241,6 +241,7 @@ int EPASE::replan(
     cout << "Total wait time: " << m_wait_time << endl;
     cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
     cout << "Total re-add popped edges to OPEN time: " << m_popped_readd_time << endl;
+    cout << "Total time to insert state to BE: " << m_insert_be_time << endl; 
     cout << endl << "---------------------" << endl;
 
     cout << endl << "---------- Expansion thread times -----------" << endl;
@@ -596,6 +597,8 @@ void EPASE::initialize()
     m_be_check_time = 0.0;
     m_open_check_time = 0.0;
     m_popped_readd_time = 0.0;
+    m_insert_be_time = 0.0;
+
     m_num_open_exhaust_to_find_edge = 0.0;
 
     m_edge_expansion_vec.clear();
@@ -802,6 +805,7 @@ int EPASE::improvePath(
 
 
         // Insert the state in BE and mark it closed if the edge being expanded is dummy edge
+        auto t_add_be_s = clock::now();
         if (min_edge_ptr->action_idx == -1)
         {
             min_edge_ptr->parent_state_ptr->is_visited += 1;
@@ -809,6 +813,9 @@ int EPASE::improvePath(
             // m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
             m_being_expanded_states.push(min_edge_ptr->parent_state_ptr);
         }
+        auto t_add_be_e = clock::now();
+        m_insert_be_time += to_seconds(t_add_be_e-t_add_be_s);
+
 
         auto now_edge_found = clock::now(); 
         m_edge_find_time += to_seconds(now_edge_found - now) - local_lock_time;
