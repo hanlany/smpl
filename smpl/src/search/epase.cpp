@@ -667,22 +667,6 @@ int EPASE::improvePath(
                     // Independence check of curr_edge with edges in BE
                     auto t_be_check_s = clock::now();
 
-
-                    // for (auto& id_state : m_being_expanded_states)
-                    // {
-                    //     if (id_state != min_edge_ptr->parent_state_ptr)
-                    //     {
-                    //         auto h_diff = computeHeuristic(id_state, min_edge_ptr->parent_state_ptr);
-                    //         if (min_edge_ptr->parent_state_ptr->g > id_state->g + m_curr_eps*h_diff)
-                    //         {
-                    //             min_edge_ptr = NULL;
-                    //             break;
-                    //         }
-                    //     }
-                    // }
-    
-                    // cout << "**************" << endl;
-                    // min_edge_ptr->parent_state_ptr->Print("Considering state");
                     while (!m_being_expanded_states.empty())
                     {
 
@@ -709,8 +693,6 @@ int EPASE::improvePath(
                         }
                     }
 
-                    // cout << "**************" << endl;
-                    // getchar();
 
                     for (const auto& popped_be_state: popped_be_states)
                         m_being_expanded_states.push(popped_be_state);
@@ -765,7 +747,11 @@ int EPASE::improvePath(
             if (!min_edge_ptr)
             {
                 m_lock.unlock();
+
+                auto t_lock_s = clock::now();                
                 unique_lock<mutex> locker(m_lock);
+                auto t_lock_e = clock::now();                
+                local_lock_time += to_seconds(t_lock_e - t_lock_s);
 
                 auto t_wait_s = clock::now();                
                 m_cv.wait(locker, [this](){return (m_recheck_flag==true);});
@@ -775,7 +761,11 @@ int EPASE::improvePath(
 
                 m_recheck_flag = false;
                 locker.unlock();
+
+                t_lock_s = clock::now();                
                 m_lock.lock();
+                t_lock_e = clock::now();                
+                local_lock_time += to_seconds(t_lock_e - t_lock_s);
 
                 continue;
             }
