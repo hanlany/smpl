@@ -338,6 +338,7 @@ private:
     double m_be_check_time;
     double m_open_check_time;
     double m_wait_time;
+    double m_popped_readd_time;
     std::vector<int> m_num_expansions_per_thread;
 
     mutable LockType m_lock;

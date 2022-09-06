@@ -240,6 +240,7 @@ int EPASE::replan(
     cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
     cout << "Total wait time: " << m_wait_time << endl;
     cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
+    cout << "Total re-add popped edges to OPEN time: " << m_popped_readd_time << endl;
     cout << endl << "---------------------" << endl;
 
     cout << endl << "---------- Expansion thread times -----------" << endl;
@@ -594,6 +595,7 @@ void EPASE::initialize()
     m_wait_time = 0.0;
     m_be_check_time = 0.0;
     m_open_check_time = 0.0;
+    m_popped_readd_time = 0.0;
     m_num_open_exhaust_to_find_edge = 0.0;
 
     m_edge_expansion_vec.clear();
@@ -733,12 +735,15 @@ int EPASE::improvePath(
             // cout << "min_edge_ptr: " << min_edge_ptr << endl;
 
             // Re add the popped states except curr state which will be expanded now
+            auto t_readd_pop_s = clock::now();
             for (auto& popped_edge_ptr : popped_edges)
             {
                 if (popped_edge_ptr != min_edge_ptr)
                     m_edge_open.push(popped_edge_ptr);
             }
-            
+            auto t_readd_pop_e = clock::now();
+            m_popped_readd_time += to_seconds(t_readd_pop_e-t_readd_pop_s);
+
             m_num_popped_edges += popped_edges.size();
             m_times_popped_edges++;
             
