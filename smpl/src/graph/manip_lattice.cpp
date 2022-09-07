@@ -897,7 +897,7 @@ bool ManipLattice::checkAction(const RobotState& state, const Action& action, in
         SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        " << iidx << ": " << istate);
 
         // check joint limits
-        if (!robot()->checkJointLimits(istate)) {
+        if (!robot()->checkJointLimits(istate, tidx)) {
             SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        -> violates joint limits");
             violation_mask |= 0x00000001;
             break;

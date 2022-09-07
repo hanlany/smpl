@@ -74,6 +74,10 @@ public:
     virtual double accLimit(int jidx) const = 0;
 
     /// \brief Check a state for joint limit violations.
+    virtual bool checkJointLimits(const RobotState& state, int tidx, bool verbose = false)
+    {SMPL_ERROR("Multi-threaded checkJointLimits not implemented");};
+
+    /// \brief Check a state for joint limit violations.
     virtual bool checkJointLimits(const RobotState& state, bool verbose = false) = 0;
 
     size_t jointCount() const { return planning_joints_.size(); }
