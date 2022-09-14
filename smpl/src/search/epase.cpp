@@ -829,7 +829,7 @@ int EPASE::improvePath(
 
         if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
 
-        if (m_num_threads == 1)
+        if ((m_num_threads == 1) || (min_edge_ptr->action_idx == -1))
         {
             expandEdge(min_edge_ptr, 0);
         }
@@ -867,7 +867,6 @@ int EPASE::improvePath(
         auto t_lock_s = clock::now();
         m_lock.lock();
         auto t_lock_e = clock::now();
-        // m_lock_time += to_seconds(t_lock_e - t_lock_s);
         elapsed_expansions = m_num_state_expansions; 
     }
 
