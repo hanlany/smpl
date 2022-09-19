@@ -408,103 +408,41 @@ auto SetupRobotModel(const std::string& urdf, const RobotModelConfig &config, in
 }
 
 
-std::vector<std::vector<std::pair<std::string, std::vector<double>>>> get_starts_goals_pairs(std::vector<moveit_msgs::CollisionObject>& collision_objects)
-{
-    std::unordered_map<std::string, std::vector<double>> goals;
-
-    // for (auto& ob : collision_objects)
-    // {
-
-    // }
-
-    // Top row, -y -> +y
-    goals["shelf_1"] = {0.8, -0.875, 0.15, 0, 0, 0};
-    goals["shelf_2"] = {0.8, -0.625, 0.15, 0, 0, 0};
-    goals["shelf_3"] = {0.8, -0.375, 0.15, 0, 0, 0};
-    goals["shelf_4"] = {0.8, -0.125, 0.15, 0, 0, 0};
-    goals["shelf_5"] = {0.8, 0.125, 0.15, 0, 0, 0};
-    goals["shelf_6"] = {0.8, 0.375, 0.15, 0, 0, 0};
-
-    // Bottom row, -y -> +y
-    goals["shelf_7"] = {0.8, -0.875, -0.15, 0, 0, 0};
-    goals["shelf_8"] = {0.8, -0.625, -0.15, 0, 0, 0};
-    goals["shelf_9"] = {0.8, -0.375, -0.15, 0, 0, 0};
-    goals["shelf_10"] = {0.8, -0.125, -0.15, 0, 0, 0};
-    goals["shelf_11"] = {0.8, 0.125, -0.15, 0, 0, 0};
-    goals["shelf_12"] = {0.8, 0.375, -0.15, 0, 0, 0};
-
-
-    std::vector<std::pair<std::string, std::vector<double>>> name_pose;
-
-    for (auto& kv : goals)
-        name_pose.emplace_back(kv);
-
-    std::vector<std::vector<std::pair<std::string, std::vector<double>>>> starts_goals;
-
-
-    for (auto itf = name_pose.begin(); itf < name_pose.end(); itf++)
-    {
-        for (auto its = itf+1; its < name_pose.end(); its++)
-        {
-            std::vector<std::pair<std::string, std::vector<double>>> temp  = {*itf, *its};
-            starts_goals.emplace_back(temp);
-        }
-    }
-
-    for (auto& name_pose : starts_goals)
-    {
-        for (auto& e: name_pose)
-            std::cout << e.first << " ";         
-        std::cout << std::endl;
-    }
-
-
-    return starts_goals;
-
-}
-
 std::vector<std::pair<std::string, std::vector<double>>> get_goals(std::vector<moveit_msgs::CollisionObject>& collision_objects)
 {
     std::vector<std::pair<std::string, std::vector<double>>> name_pose;
     std::unordered_map<std::string, std::vector<double>> goals;
 
-    // for (auto& ob : collision_objects)
-    // {
 
-    // }
 
-    // Top row, -y -> +y
-
-        // Top row, -y -> +y
-    goals["shelf_1"] = {0.8, -0.875, 0.15, 0, 0, 0};
-    goals["shelf_2"] = {0.8, -0.625, 0.15, 0, 0, 0};
-    goals["shelf_3"] = {0.8, -0.375, 0.15, 0, 0, 0};
-    goals["shelf_4"] = {0.8, -0.125, 0.15, 0, 0, 0};
-    goals["shelf_5"] = {0.8, 0.125, 0.15, 0, 0, 0};
-    goals["shelf_6"] = {0.8, 0.375, 0.15, 0, 0, 0};
+    double height = 0.6;
+    // goals["shelf_1"] = {0.4, -0.85, height + 0.15, 0, 0, 0};
+    goals["shelf_2"] = {0.4, -0.55, height + 0.15, 0, 0, 0};
+    goals["shelf_3"] = {0.4, -0.25, height + 0.15, 0, 0, 0};
+    goals["shelf_4"] = {0.4, -0.05, height + 0.15, 0, 0, 0};
+    goals["shelf_5"] = {0.4, 0.35, height + 0.15, 0, 0, 0};
 
     // Bottom row, -y -> +y
-    goals["shelf_7"] = {0.8, -0.875, -0.15, 0, 0, 0};
-    goals["shelf_8"] = {0.8, -0.625, -0.15, 0, 0, 0};
-    goals["shelf_9"] = {0.8, -0.375, -0.15, 0, 0, 0};
-    goals["shelf_10"] = {0.8, -0.125, -0.15, 0, 0, 0};
-    goals["shelf_11"] = {0.8, 0.125, -0.15, 0, 0, 0};
-    goals["shelf_12"] = {0.8, 0.375, -0.15, 0, 0, 0};
+    // goals["shelf_6"] = {0.4, -0.85, height-0.15, 0, 0, 0};
+    goals["shelf_7"] = {0.4, -0.55, height-0.15, 0, 0, 0};
+    goals["shelf_8"] = {0.4, -0.25, height-0.15, 0, 0, 0};
+    goals["shelf_9"] = {0.4, -0.05, height-0.15, 0, 0, 0};
+    // goals["shelf_10"] = {0.4, 0.35, height-0.15, 0, 0, 0};
 
-    name_pose.emplace_back(std::make_pair("shelf_1", goals["shelf_1"]));
+    // name_pose.emplace_back(std::make_pair("shelf_1", goals["shelf_1"]));
     name_pose.emplace_back(std::make_pair("shelf_2", goals["shelf_2"]));
     name_pose.emplace_back(std::make_pair("shelf_3", goals["shelf_3"]));
     name_pose.emplace_back(std::make_pair("shelf_4", goals["shelf_4"]));
     name_pose.emplace_back(std::make_pair("shelf_5", goals["shelf_5"]));
-    name_pose.emplace_back(std::make_pair("shelf_6", goals["shelf_6"]));
+    // name_pose.emplace_back(std::make_pair("shelf_6", goals["shelf_6"]));
 
     // Bottom row, -y -> +y
     name_pose.emplace_back(std::make_pair("shelf_7", goals["shelf_7"]));
     name_pose.emplace_back(std::make_pair("shelf_8", goals["shelf_8"]));
     name_pose.emplace_back(std::make_pair("shelf_9", goals["shelf_9"]));
-    name_pose.emplace_back(std::make_pair("shelf_10", goals["shelf_10"]));
-    name_pose.emplace_back(std::make_pair("shelf_11", goals["shelf_11"]));
-    name_pose.emplace_back(std::make_pair("shelf_12", goals["shelf_12"]));
+    // name_pose.emplace_back(std::make_pair("shelf_10", goals["shelf_10"]));
+    // name_pose.emplace_back(std::make_pair("shelf_11", goals["shelf_11"]));
+    // name_pose.emplace_back(std::make_pair("shelf_12", goals["shelf_12"]));
 
 
     return name_pose;
@@ -523,6 +461,9 @@ void run_experiments(int num_threads,
     const std::string& planning_frame, std::vector<moveit_msgs::CollisionObject>& collision_objects)
 {
 
+    auto goal_pub = nh.advertise<geometry_msgs::PoseStamped>("goal", 10);
+
+
     auto goals = get_goals(collision_objects);
 
     std::vector<bool> success(goals.size(), false);
@@ -531,6 +472,22 @@ void run_experiments(int num_threads,
     {
 
         auto goal = goals[idx].second;
+
+        geometry_msgs::PoseStamped goal_pose;
+        goal_pose.header.frame_id = planning_frame;
+        goal_pose.pose.position.x = goal[0];
+        goal_pose.pose.position.y = goal[1];
+        goal_pose.pose.position.z = goal[2];
+        
+        int i = 0;
+        // while(true)
+        while(i < 4)
+        {
+            goal_pub.publish(goal_pose);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            i++;
+        }
+
         std::vector<double> start = {0, 0, 0, -1.1356 ,0, -1.05, 0};
 
         for (int i = 0; i < start_state.joint_state.name.size(); ++i)
@@ -633,11 +590,25 @@ void run_experiments(int num_threads,
                     }
                 }
                 success[idx] = true;                
+            
+                // size_t pidx = 0;
+                // while (ros::ok()) {
+                //     auto& point = res.trajectory.joint_trajectory.points[pidx];
+                //     auto markers = cc.getCollisionRobotVisualization(0, point.positions);
+                //     for (auto& m : markers.markers) {
+                //         m.ns = "path_animation";
+                //     }
+                //     SV_SHOW_INFO(markers);
+                //     std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                //     pidx++;
+                //     pidx %= res.trajectory.joint_trajectory.points.size();
+                // }
+
             }
 
         }
 
-        std::cin.get();
+        // std::cin.get();
 
 
     }
