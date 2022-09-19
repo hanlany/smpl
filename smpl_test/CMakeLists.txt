@@ -37,9 +37,13 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 include_directories(SYSTEM ${orocos_kdl_INCLUDE_DIRS})
 
 add_executable(callPlanner src/call_planner.cpp src/collision_space_scene.cpp)
-add_executable(callPlannerEpase src/call_planner_epase.cpp src/collision_space_scene_multithread.cpp)
 target_link_libraries(callPlanner ${catkin_LIBRARIES} smpl::smpl)
+
+add_executable(callPlannerEpase src/call_planner_epase.cpp src/collision_space_scene_multithread.cpp)
 target_link_libraries(callPlannerEpase ${catkin_LIBRARIES} smpl::smpl)
+
+add_executable(evaluateEpase src/evaluate_epase.cpp src/collision_space_scene_multithread.cpp)
+target_link_libraries(evaluateEpase ${catkin_LIBRARIES} smpl::smpl)
 
 #add_executable(call_ompl_planner src/call_ompl_planner.cpp src/collision_space_scene.cpp)
 #target_include_directories(call_ompl_planner SYSTEM PRIVATE ${OMPL_INCLUDE_DIRS})
@@ -79,6 +83,6 @@ target_link_libraries(debug_vis_demo ${catkin_LIBRARIES} smpl::smpl)
 #target_link_libraries(distance_map_test ${catkin_LIBRARIES} ${Boost_LIBRARIES} smpl::smpl)
 
 install(
-    TARGETS callPlanner callPlannerEpase
+    TARGETS callPlanner callPlannerEpase evaluateEpase
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
