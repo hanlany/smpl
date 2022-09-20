@@ -416,32 +416,40 @@ std::vector<std::pair<std::string, std::vector<double>>> get_goals(std::vector<m
 
 
     double height = 0.6;
-    // goals["shelf_1"] = {0.4, -0.85, height + 0.15, 0, 0, 0};
-    goals["shelf_2"] = {0.4, -0.55, height + 0.15, 0, 0, 0};
-    goals["shelf_3"] = {0.4, -0.25, height + 0.15, 0, 0, 0};
-    goals["shelf_4"] = {0.4, -0.05, height + 0.15, 0, 0, 0};
-    goals["shelf_5"] = {0.4, 0.35, height + 0.15, 0, 0, 0};
+    double y_offset = -0.25;
+    goals["shelf_1"] = {0.4, -0.85 + y_offset, height + 0.15, 0, 0, 0};
+    goals["shelf_2"] = {0.4, -0.55 + y_offset, height + 0.15, 0, 0, 0};
+    goals["shelf_3"] = {0.4, -0.25 + y_offset, height + 0.15, 0, 0, 0};
+    goals["shelf_4"] = {0.4, -0.05 + y_offset, height + 0.15, 0, 0, 0};
+    goals["shelf_5"] = {0.4, 0.35 + y_offset, height + 0.15, 0, 0, 0};
 
     // Bottom row, -y -> +y
-    // goals["shelf_6"] = {0.4, -0.85, height-0.15, 0, 0, 0};
-    goals["shelf_7"] = {0.4, -0.55, height-0.15, 0, 0, 0};
-    goals["shelf_8"] = {0.4, -0.25, height-0.15, 0, 0, 0};
-    goals["shelf_9"] = {0.4, -0.05, height-0.15, 0, 0, 0};
-    // goals["shelf_10"] = {0.4, 0.35, height-0.15, 0, 0, 0};
+    goals["shelf_6"] = {0.4, -0.85 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_7"] = {0.4, -0.55 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_8"] = {0.4, -0.25 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_9"] = {0.4, -0.05 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_10"] = {0.4, 0.35 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_11"] = {0.4, 0.25 + y_offset, height-0.15, 0, 0, 0};
+    goals["shelf_12"] = {0.4, -0.25 + y_offset, height + 0.15, 0, 0, 0};
+    goals["shelf_13"] = {0.4, -0.25 + y_offset, height - 0.15, 0, 0, 0};
+    goals["shelf_14"] = {0.4, 0.10 + y_offset, height - 0.15, 0, 0, 0};
 
     // name_pose.emplace_back(std::make_pair("shelf_1", goals["shelf_1"]));
     name_pose.emplace_back(std::make_pair("shelf_2", goals["shelf_2"]));
+    name_pose.emplace_back(std::make_pair("shelf_8", goals["shelf_8"]));
     name_pose.emplace_back(std::make_pair("shelf_3", goals["shelf_3"]));
-    name_pose.emplace_back(std::make_pair("shelf_4", goals["shelf_4"]));
     name_pose.emplace_back(std::make_pair("shelf_5", goals["shelf_5"]));
     // name_pose.emplace_back(std::make_pair("shelf_6", goals["shelf_6"]));
 
     // Bottom row, -y -> +y
-    name_pose.emplace_back(std::make_pair("shelf_7", goals["shelf_7"]));
-    name_pose.emplace_back(std::make_pair("shelf_8", goals["shelf_8"]));
+    // name_pose.emplace_back(std::make_pair("shelf_7", goals["shelf_7"]));
     name_pose.emplace_back(std::make_pair("shelf_9", goals["shelf_9"]));
-    // name_pose.emplace_back(std::make_pair("shelf_10", goals["shelf_10"]));
-    // name_pose.emplace_back(std::make_pair("shelf_11", goals["shelf_11"]));
+    name_pose.emplace_back(std::make_pair("shelf_11", goals["shelf_11"]));
+    name_pose.emplace_back(std::make_pair("shelf_12", goals["shelf_12"]));
+    name_pose.emplace_back(std::make_pair("shelf_13", goals["shelf_13"]));
+    name_pose.emplace_back(std::make_pair("shelf_4", goals["shelf_4"]));
+    name_pose.emplace_back(std::make_pair("shelf_14", goals["shelf_14"]));
+
     // name_pose.emplace_back(std::make_pair("shelf_12", goals["shelf_12"]));
 
 
