@@ -34,6 +34,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <numeric>
 
 // system includes
 #include <eigen_conversions/eigen_msg.h>
@@ -475,6 +476,9 @@ void run_experiments(int num_threads,
     auto goals = get_goals(collision_objects);
 
     std::vector<bool> success(goals.size(), false);
+    std::vector<double> planning_times(goals.size(), -1);
+    std::vector<double> solution_costs(goals.size(), -1);
+
     std::vector<double> start = {0, 0, 0, -1.1356 ,0, -1.05, 0};
 
     for (int idx = 0; idx < goals.size(); ++idx)
@@ -588,16 +592,19 @@ void run_experiments(int num_threads,
             }
             else
             {
+                auto planning_stats = planner_interface->getPlannerStats();
+                
                 if (VERBOSE)
                 {
-                    auto planning_stats = planner_interface->getPlannerStats();
                     ROS_INFO("Planning statistics");
-                    for (auto& entry : planning_stats) {
-                        if (VERBOSE)
-                            ROS_INFO("    %s: %0.3f", entry.first.c_str(), entry.second);
-                    }
+                    if (VERBOSE)
+                        for (auto& entry : planning_stats)
+                                ROS_INFO("    %s: %0.3f", entry.first.c_str(), entry.second);
                 }
+
                 success[idx] = true;                
+                planning_times[idx] = planning_stats["initial solution planning time"];
+                solution_costs[idx] = planning_stats["solution cost"];
             
                 // size_t pidx = 0;
                 // while (ros::ok()) {
@@ -618,14 +625,22 @@ void run_experiments(int num_threads,
         }
 
         // std::cin.get();
-
-
     }
 
-    std::cout << "Success: ";
-    for(const auto& s : success)
-        std::cout << s << " ";
-    std::cout << std::endl;
+
+    for (int i = 0; i < goals.size(); ++i)
+    {
+        std::cout << "Exp " << i 
+        << " | success: " << success[i] 
+        << " | times: " << planning_times[i] 
+        << " | cost: " << solution_costs[i]
+        << std::endl;
+    }
+
+    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Mean time: " << std::accumulate(planning_times.begin(), planning_times.end(), 0.0)/planning_times.size();
+    std::cout << "Mean cost: " << std::accumulate(solution_costs.begin(), solution_costs.end(), 0.0)/solution_costs.size();
+    std::cout << "--------------------------------" << std::endl;
 
 
 
