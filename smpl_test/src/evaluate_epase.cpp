@@ -475,9 +475,12 @@ void run_experiments(int num_threads, std::string planner_name,
 
     auto goals = get_goals(collision_objects);
 
+    double allowed_planning_time;
+    ph.param("allowed_planning_time", allowed_planning_time, 10.0);
+
     std::vector<bool> success(goals.size(), false);
-    std::vector<double> planning_times(goals.size(), -1);
-    std::vector<double> solution_costs(goals.size(), -1);
+    std::vector<double> planning_times(goals.size(), 0);
+    std::vector<double> solution_costs(goals.size(), 0);
 
     std::vector<std::vector<double>> starts = 
     {{0, 0, 0, -1.1356 ,0, -1.05, 0},
