@@ -459,7 +459,7 @@ std::vector<std::pair<std::string, std::vector<double>>> get_goals(std::vector<m
 }
 
 
-void run_experiments(int num_threads,
+void run_experiments(int num_threads, std::string planner_name,
     ros::NodeHandle& nh, ros::NodeHandle& ph, 
     smpl::PlanningParams& planner_params, 
     smpl::OccupancyGrid& grid,
@@ -479,12 +479,26 @@ void run_experiments(int num_threads,
     std::vector<double> planning_times(goals.size(), -1);
     std::vector<double> solution_costs(goals.size(), -1);
 
-    std::vector<double> start = {0, 0, 0, -1.1356 ,0, -1.05, 0};
+    std::vector<std::vector<double>> starts = 
+    {{0, 0, 0, -1.1356 ,0, -1.05, 0},
+    {-1.15494, 0.358322, -1.39402, -0.547191, -0.0360203, -0.635847, 1.20247},
+    {-0.816889, 1.11682, -0.597626, -0.68616, -0.459279, -0.618735, 0.641153},
+    {-1.21098, 0.730449, -1.32468, -1.5694, 3.14159, -0.263978, -2.33501},
+    {0.561873, 1.17091, -0.0124739, -1.69102, 2.22937, -0.755835, -2.38112},
+    {-0.828813, 1.18254, -1.2943, -0.97703, 0.960312, -0.510405, -0.486079},
+    {0.0883643, 1.2963, -0.604049, -0.942974, 1.23355, -0.713154, -0.940397},
+    {-1.21742, 0.703034, -1.36426, -1.56792, 3.04086, -0.26581, -2.20094},
+    {-0.955761, 0.980127, -1.25805, -0.661308, 0.367367, -0.606987, 0.265894},
+    {-0.868459, 1.08927, -1.07149, -1.84564, 2.89501, -0.595506, -2.51283}};
+
+
 
     for (int idx = 0; idx < goals.size(); ++idx)
     {
 
+
         auto goal = goals[idx].second;
+        auto start = starts[idx];
 
         geometry_msgs::PoseStamped goal_pose;
         goal_pose.header.frame_id = planning_frame;
@@ -562,7 +576,7 @@ void run_experiments(int num_threads,
         req.max_acceleration_scaling_factor = 1.0;
         req.max_velocity_scaling_factor = 1.0;
         req.num_planning_attempts = 1;
-        req.planner_id = "arastar.bfs.manip";
+        req.planner_id = planner_name + ".bfs.manip";
         req.start_state = start_state;
 
         // Set up planner interface
@@ -619,7 +633,7 @@ void run_experiments(int num_threads,
                 //     pidx %= res.trajectory.joint_trajectory.points.size();
                 // }
                 // 
-                start = res.trajectory.joint_trajectory.points.back().positions;
+                // start = res.trajectory.joint_trajectory.points.back().positions;
             }
 
         }
@@ -638,9 +652,10 @@ void run_experiments(int num_threads,
     }
 
     std::cout << "--------------------------------" << std::endl;
-    std::cout << "Mean time: " << std::accumulate(planning_times.begin(), planning_times.end(), 0.0)/planning_times.size();
-    std::cout << "Mean cost: " << std::accumulate(solution_costs.begin(), solution_costs.end(), 0.0)/solution_costs.size();
+    std::cout << "Mean time: " << std::accumulate(planning_times.begin(), planning_times.end(), 0.0)/planning_times.size() << std::endl;
+    std::cout << "Mean cost: " << std::accumulate(solution_costs.begin(), solution_costs.end(), 0.0)/solution_costs.size() << std::endl;
     std::cout << "--------------------------------" << std::endl;
+
 
 
 
@@ -653,11 +668,19 @@ int main(int argc, char* argv[])
     ros::NodeHandle ph("~");
     
     int num_threads;    
-    
-    if (argc == 2)
-        num_threads = atoi(argv[1]);
+    std::string planner_name;
+
+    if (argc == 3)
+    {
+        planner_name = argv[1];
+        num_threads = atoi(argv[2]);        
+    }
     else
-        ph.param("num_threads", num_threads, 1);
+    {
+        planner_name = "arastar";
+        num_threads = 1;
+    }
+
     
     std::cout << "num_threads: " << num_threads << std::endl;
 
@@ -890,7 +913,7 @@ int main(int argc, char* argv[])
 
 
 
-    run_experiments(num_threads, nh, ph, params, grid, robot_config, start_state, scene, cc, rm, planning_frame, objects);
+    run_experiments(num_threads, planner_name, nh, ph, params, grid, robot_config, start_state, scene, cc, rm, planning_frame, objects);
 
 
 
