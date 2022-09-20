@@ -467,6 +467,7 @@ void run_experiments(int num_threads,
     auto goals = get_goals(collision_objects);
 
     std::vector<bool> success(goals.size(), false);
+    std::vector<double> start = {0, 0, 0, -1.1356 ,0, -1.05, 0};
 
     for (int idx = 0; idx < goals.size(); ++idx)
     {
@@ -488,7 +489,6 @@ void run_experiments(int num_threads,
             i++;
         }
 
-        std::vector<double> start = {0, 0, 0, -1.1356 ,0, -1.05, 0};
 
         for (int i = 0; i < start_state.joint_state.name.size(); ++i)
         {
@@ -603,7 +603,8 @@ void run_experiments(int num_threads,
                 //     pidx++;
                 //     pidx %= res.trajectory.joint_trajectory.points.size();
                 // }
-
+                // 
+                start = res.trajectory.joint_trajectory.points.back().positions;
             }
 
         }
@@ -613,7 +614,10 @@ void run_experiments(int num_threads,
 
     }
 
-
+    std::cout << "Success: ";
+    for(const auto& s : success)
+        std::cout << s << " ";
+    std::cout << std::endl;
 
 
 
