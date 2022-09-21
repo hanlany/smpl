@@ -1445,7 +1445,7 @@ void EPASE::exit()
                 break;
             }
             else
-                cout << "thread exited: " << fut_idx << endl;
+                if (VERBOSE) cout << "thread exited: " << fut_idx << endl;
         }
     }
     m_edge_expansion_futures.clear();
