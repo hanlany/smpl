@@ -649,7 +649,7 @@ void run_experiments(int num_threads, std::string planner_name,
     {
         std::cout << "Exp " << i 
         << " | success: " << success[i] 
-        << " | times: " << planning_times[i] 
+        << " | time: " << planning_times[i] 
         << " | cost: " << solution_costs[i]
         << std::endl;
     }
