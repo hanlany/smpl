@@ -654,9 +654,23 @@ void run_experiments(int num_threads, std::string planner_name,
         << std::endl;
     }
 
+
+    std::vector<double> success_costs, success_times;
+
+    for (int i = 0; i < goals.size(); ++i)
+    {
+        if (planning_times[i] != -1)
+        {
+            success_times.emplace_back(planning_times[i]);
+            success_costs.emplace_back(solution_costs[i]);
+        }
+    }
+
+
     std::cout << "--------------------------------" << std::endl;
-    std::cout << "Mean time: " << std::accumulate(planning_times.begin(), planning_times.end(), 0.0)/planning_times.size() << std::endl;
-    std::cout << "Mean cost: " << std::accumulate(solution_costs.begin(), solution_costs.end(), 0.0)/solution_costs.size() << std::endl;
+    std::cout << "Success rate: " << double(success_times.size())/planning_times.size() << std::endl;
+    std::cout << "Mean time: " << std::accumulate(success_times.begin(), success_times.end(), 0.0)/success_times.size() << std::endl;
+    std::cout << "Mean cost: " << std::accumulate(success_costs.begin(), success_costs.end(), 0.0)/success_costs.size() << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
 
