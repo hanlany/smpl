@@ -214,20 +214,21 @@ bool CollisionSpaceMultithread::removeShapes(int thread_idx, const CollisionObje
 /// \param link_name The link to attach the object to
 /// \return true if the object was attached; false otherwise
 bool CollisionSpaceMultithread::attachObject(
+    int thread_idx,
     const std::string& id,
     const std::vector<shapes::ShapeConstPtr>& shapes,
     const Isometry3dVector& transforms,
     const std::string& link_name)
 {
-    return m_abcm->attachBody(id, shapes, transforms, link_name);
+    return m_abcm[thread_idx]->attachBody(id, shapes, transforms, link_name);
 }
 
 /// \brief Detach a collision object from the robot
 /// \param id The name of the object
 /// \return true if the object was detached; false otherwise
-bool CollisionSpaceMultithread::detachObject(const std::string& id)
+bool CollisionSpaceMultithread::detachObject(int thread_idx, const std::string& id)
 {
-    return m_abcm->detachBody(id);
+    return m_abcm[thread_idx]->detachBody(id);
 }
 
 /// \brief Return a visualization of the current world
@@ -641,17 +642,19 @@ bool CollisionSpaceMultithread::init(
     m_gidx = m_rcm->groupIndex(m_group_name);
 
     m_rmcm = std::make_shared<RobotMotionCollisionModel>(m_rcm.get());
-    m_abcm = std::make_shared<AttachedBodiesCollisionModel>(m_rcm.get()),
     
     m_rcs.resize(num_threads);
     m_abcs.resize(num_threads);
     m_joint_vars.resize(num_threads);
     m_wcm.resize(num_threads);
     m_scm.resize(num_threads);
+    m_abcm.resize(num_threads);
+
     for (int thread_idx = 0; thread_idx < num_threads_; ++thread_idx)
     {
+        m_abcm[thread_idx] = std::make_shared<AttachedBodiesCollisionModel>(m_rcm.get()),
         m_rcs[thread_idx] = std::make_shared<RobotCollisionState>(m_rcm.get());
-        m_abcs[thread_idx] = std::make_shared<AttachedBodiesCollisionState>(m_abcm.get(), m_rcs[thread_idx].get());        
+        m_abcs[thread_idx] = std::make_shared<AttachedBodiesCollisionState>(m_abcm[thread_idx].get(), m_rcs[thread_idx].get());        
         m_joint_vars[thread_idx].assign(
             m_rcs[thread_idx]->getJointVarPositions(),
             m_rcs[thread_idx]->getJointVarPositions() + m_rcm->jointVarCount());
@@ -664,7 +667,7 @@ bool CollisionSpaceMultithread::init(
         grid_vec.emplace_back(grid);
         
         m_wcm[thread_idx] = std::make_shared<WorldCollisionModel>(grid);
-        m_scm[thread_idx] = std::make_shared<SelfCollisionModel>(grid, m_rcm.get(), m_abcm.get());
+        m_scm[thread_idx] = std::make_shared<SelfCollisionModel>(grid, m_rcm.get(), m_abcm[thread_idx].get());
     }
 
     m_grid_vec = grid_vec;

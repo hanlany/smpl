@@ -420,7 +420,7 @@ bool CollisionSpaceSceneMultithread::ProcessAttachedCollisionObject(
     case moveit_msgs::CollisionObject::ADD:
     {
         auto o = ConvertCollisionObjectToObjectMultithread(ao.object);
-        if (!m_cspace->attachObject(
+        if (!m_cspace->attachObject(thread_idx,
                 ao.object.id, o->shapes_, o->shape_poses_, ao.link_name))
         {
             return false;
@@ -431,7 +431,7 @@ bool CollisionSpaceSceneMultithread::ProcessAttachedCollisionObject(
     }   break;
     case moveit_msgs::CollisionObject::REMOVE:
     {
-        if (!m_cspace->detachObject(ao.object.id)) {
+        if (!m_cspace->detachObject(thread_idx, ao.object.id)) {
             return false;
         }
         return true;

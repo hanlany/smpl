@@ -121,12 +121,13 @@ public:
     /// \name Attached Objects
     ///@{
     bool attachObject(
+        int thread_idx,
         const std::string& id,
         const std::vector<shapes::ShapeConstPtr>& shapes,
         const Isometry3dVector& transforms,
         const std::string& link_name);
 
-    bool detachObject(const std::string& id);
+    bool detachObject(int thread_idx, const std::string& id);
     ///@}
 
     auto getReferenceFrame() const -> const std::string&
@@ -246,7 +247,7 @@ public:
     std::vector<std::string>        m_planning_variables;
 
     RobotCollisionModelConstPtr         m_rcm;
-    AttachedBodiesCollisionModelPtr     m_abcm;
+    std::vector<AttachedBodiesCollisionModelPtr>     m_abcm;
 
     RobotMotionCollisionModelConstPtr   m_rmcm;
 
