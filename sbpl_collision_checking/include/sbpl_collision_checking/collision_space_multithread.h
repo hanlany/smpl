@@ -104,7 +104,7 @@ public:
 
     /// \name Self Collisions
     ///@{
-    auto allowedCollisionMatrix() const -> const AllowedCollisionMatrix&;
+    auto allowedCollisionMatrix(int thread_idx) const -> const AllowedCollisionMatrix&;
     void updateAllowedCollisionMatrix(const AllowedCollisionMatrix& acm);
     void setAllowedCollisionMatrix(const AllowedCollisionMatrix& acm);
     ///@}

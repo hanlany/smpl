@@ -125,12 +125,9 @@ void CollisionSpaceMultithread::setPadding(double padding)
 
 /// \brief Return the allowed collision matrix
 /// \return The allowed collision matrix
-const AllowedCollisionMatrix& CollisionSpaceMultithread::allowedCollisionMatrix() const
+const AllowedCollisionMatrix& CollisionSpaceMultithread::allowedCollisionMatrix(int thread_idx) const
 {
-    for (int thread_idx = 0; thread_idx < num_threads_; ++thread_idx)
-    {
-        return m_scm[thread_idx]->allowedCollisionMatrix();
-    }
+    return m_scm[thread_idx]->allowedCollisionMatrix();
 }
 
 /// \brief Update the allowed collisoin matrix
@@ -140,7 +137,7 @@ void CollisionSpaceMultithread::updateAllowedCollisionMatrix(
 {
     for (int thread_idx = 0; thread_idx < num_threads_; ++thread_idx)
     {
-        return m_scm[thread_idx]->updateAllowedCollisionMatrix(acm);
+        m_scm[thread_idx]->updateAllowedCollisionMatrix(acm);
     }
 }
 

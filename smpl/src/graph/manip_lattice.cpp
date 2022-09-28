@@ -409,6 +409,8 @@ void ManipLattice::GetSuccs(
 
     m_lock.lock();   
     ManipLatticeState* parent_entry = m_states[state_id];
+    auto* vis_name = "expansion";
+    SV_SHOW_INFO_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
     m_lock.unlock();   
 
     assert(parent_entry);
@@ -418,8 +420,6 @@ void ManipLattice::GetSuccs(
     // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  coord: " << parent_entry->coord);
     // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "  angles: " << parent_entry->state);
 
-    // auto* vis_name = "expansion";
-    // SV_SHOW_DEBUG_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
 
     int goal_succ_count = 0;
 
