@@ -43,6 +43,7 @@
 #include <smpl/console/console.h>
 
 #define VERBOSE 0
+#define PRINT_STATS 0
 
 using namespace std;
 
@@ -228,66 +229,69 @@ int EPASE::replan(
 
     extractPath(goal_state, *solution, *cost);
     
-    cout << "*********************" << endl;
-    cout << "Planning time: " << to_seconds(m_search_time) << endl;
+    if (PRINT_STATS)
+    {
+        cout << "*********************" << endl;
+        cout << "Planning time: " << to_seconds(m_search_time) << endl;
 
-    
-    cout << endl << "---------- Main thread times -----------" << endl;
-    cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
-    cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
-    cout << "Avg BE check time: " << m_be_check_time/m_num_be_check << " (" << m_be_check_time << "/" << m_num_be_check << ")" << endl;
-    cout << "Total OPEN check time: " << m_open_check_time << endl;
-    cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
-    cout << "Total wait time: " << m_wait_time << endl;
-    cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
-    cout << "Total re-add popped edges to OPEN time: " << m_popped_readd_time << endl;
-    cout << "Total time to insert state to BE: " << m_insert_be_time << endl; 
-    cout << endl << "---------------------" << endl;
+        
+        cout << endl << "---------- Main thread times -----------" << endl;
+        cout << "Total edge find time in main thread: " << m_edge_find_time   << endl;
+        cout << "Average edge find time: " << m_edge_find_time/m_num_edge_found << endl;
+        cout << "Avg BE check time: " << m_be_check_time/m_num_be_check << " (" << m_be_check_time << "/" << m_num_be_check << ")" << endl;
+        cout << "Total OPEN check time: " << m_open_check_time << endl;
+        cout << "Total lock time in main thread: " << m_lock_time_main_thread << endl;
+        cout << "Total wait time: " << m_wait_time << endl;
+        cout << "Avg wait time: " << m_wait_time/m_wait_num << endl;
+        cout << "Total re-add popped edges to OPEN time: " << m_popped_readd_time << endl;
+        cout << "Total time to insert state to BE: " << m_insert_be_time << endl; 
+        cout << endl << "---------------------" << endl;
 
-    cout << endl << "---------- Expansion thread times -----------" << endl;
-    cout << "Total expansions time: " << m_expansions_time << endl;
-    cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
+        cout << endl << "---------- Expansion thread times -----------" << endl;
+        cout << "Total expansions time: " << m_expansions_time << endl;
+        cout << "Total lock time in expansion threads: " << m_lock_time << endl;   
 
-    cout << endl << "--------- Data structures sizes------------" << endl;
-    cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
-    cout << "Last open list size: " << m_edge_open_last_size << endl;
-    cout << "Max open list size: " << m_edge_open_max_size << endl;
-    cout << "Last BE list size: " << m_be_last_size << endl;
-    cout << "Max BE list size: " << m_be_max_size << endl;
-    cout << endl << "---------------------" << endl;
+        cout << endl << "--------- Data structures sizes------------" << endl;
+        cout << "Number of edges found for expansion: " << m_num_edge_found << endl;
+        cout << "Last open list size: " << m_edge_open_last_size << endl;
+        cout << "Max open list size: " << m_edge_open_max_size << endl;
+        cout << "Last BE list size: " << m_be_last_size << endl;
+        cout << "Max BE list size: " << m_be_max_size << endl;
+        cout << endl << "---------------------" << endl;
 
-    cout << "Number of times open exhaust to find edge: " << m_num_open_exhaust_to_find_edge << endl;
-    cout << "Avg popped edges size: " << m_num_popped_edges/m_times_popped_edges << " (" << m_num_popped_edges << " / " << m_times_popped_edges << ")" << endl;
+        cout << "Number of times open exhaust to find edge: " << m_num_open_exhaust_to_find_edge << endl;
+        cout << "Avg popped edges size: " << m_num_popped_edges/m_times_popped_edges << " (" << m_num_popped_edges << " / " << m_times_popped_edges << ")" << endl;
 
-    cout << endl << "---------------------" << endl;
+        cout << endl << "---------------------" << endl;
 
-    cout << "Num expand calls : " << m_num_expand_calls << endl; 
-    cout << "Average expansions time: " << m_expansions_time/m_num_expand_calls << endl;
+        cout << "Num expand calls : " << m_num_expand_calls << endl; 
+        cout << "Average expansions time: " << m_expansions_time/m_num_expand_calls << endl;
 
-    cout << endl << "---------------------" << endl;
+        cout << endl << "---------------------" << endl;
 
-    cout << "Num state expansions: " << m_num_state_expansions << endl;
-    cout << "Num edge evals: " << m_num_edge_evals << endl;
-    cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
-    cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
+        cout << "Num state expansions: " << m_num_state_expansions << endl;
+        cout << "Num edge evals: " << m_num_edge_evals << endl;
+        cout << "State expansions/second: " << m_num_state_expansions/to_seconds(m_search_time) << endl;
+        cout << "Edge evaluations/second: " << m_num_edge_evals/to_seconds(m_search_time) << endl;    
 
-    cout << endl << "------------- Cheap expansions -------------" << endl;
+        cout << endl << "------------- Cheap expansions -------------" << endl;
 
-    cout << "Num cheap expansions: " << m_num_cheap_expansions << endl;
-    cout << "Total cheap expansions time: " << m_cheap_expansions_time << endl;
-    cout << "Average cheap expansions time: " << m_cheap_expansions_time/m_num_cheap_expansions << endl;
-    cout << "Average cheap GetSucc time: " << m_cheap_get_succ_time/m_num_cheap_expansions << endl;
-    cout << endl << "------------- Expensive expansions -------------" << endl ;
+        cout << "Num cheap expansions: " << m_num_cheap_expansions << endl;
+        cout << "Total cheap expansions time: " << m_cheap_expansions_time << endl;
+        cout << "Average cheap expansions time: " << m_cheap_expansions_time/m_num_cheap_expansions << endl;
+        cout << "Average cheap GetSucc time: " << m_cheap_get_succ_time/m_num_cheap_expansions << endl;
+        cout << endl << "------------- Expensive expansions -------------" << endl ;
 
-    cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
-    cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
-    cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
-    cout << "Average expensive GetSucc time: " << m_exp_get_succ_time/m_num_exp_expansions << endl;
-    cout << endl << "------------- Expansions per thread -------------" << endl;
-    for (int tidx = 0; tidx < m_num_threads; ++tidx)
-        cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
-   
-    cout << "*********************" << endl;
+        cout << "Num expensive expansions: " << m_num_exp_expansions << endl;
+        cout << "Total expensive expansions time: " << m_exp_expansions_time << endl;
+        cout << "Average expensive expansions time: " << m_exp_expansions_time/m_num_exp_expansions << endl;
+        cout << "Average expensive GetSucc time: " << m_exp_get_succ_time/m_num_exp_expansions << endl;
+        cout << endl << "------------- Expansions per thread -------------" << endl;
+        for (int tidx = 0; tidx < m_num_threads; ++tidx)
+            cout << "thread: " << tidx << " expansions: " << m_num_expansions_per_thread[tidx] << endl;
+       
+        cout << "*********************" << endl;
+    }
 
     return !SUCCESS;
 }
@@ -428,8 +432,10 @@ void EPASE::get_search_stats(std::vector<PlannerStats>* s)
     PlannerStats stats;
     stats.eps = m_curr_eps;
 //    stats.cost; // TODO: implement
-    stats.expands = m_expand_count;
+    stats.expands = m_num_state_expansions;
     stats.time = to_seconds(m_search_time);
+    stats.edge_expands = m_num_edge_evals;
+
     s->push_back(stats);
 }
 

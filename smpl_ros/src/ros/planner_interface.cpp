@@ -1351,6 +1351,14 @@ auto PlannerInterface::getPlannerStats() -> std::map<std::string, double>
     stats["solution epsilon"] = m_planner->get_solution_eps();
     stats["expansions"] = m_planner->get_n_expands();
     stats["solution cost"] = m_sol_cost;
+        
+    std::vector<PlannerStats> search_stats;
+    m_planner->get_search_stats(&search_stats);
+
+    stats["time"] = search_stats[0].time;
+    stats["state_expansions"] = search_stats[0].expands;
+    stats["edge_expansions"] = search_stats[0].edge_expands;
+
     return stats;
 }
 

@@ -349,6 +349,14 @@ void ARAStar::get_search_stats(std::vector<PlannerStats>* s)
 //    stats.cost; // TODO: implement
     stats.expands = m_expand_count;
     stats.time = to_seconds(m_search_time);
+ 
+    std::vector<int> cheap_succs;
+    std::vector<int> expensive_succs;
+    m_space->GetCheapExpensiveSuccsIdxs(-1, cheap_succs, expensive_succs);
+    auto num_edge_evals = cheap_succs.size() + expensive_succs.size();
+
+    stats.edge_expands = num_edge_evals*m_expand_count;
+
     s->push_back(stats);
 }
 
