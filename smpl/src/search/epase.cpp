@@ -683,22 +683,12 @@ int EPASE::improvePath(
                 
                     // Independence check of curr_edge with edges in BE
                     auto t_be_check_s = clock::now();
-
-                    while (!m_being_expanded_states.empty())
+                    for (auto& id_state : m_being_expanded_states)
                     {
-
-                        auto popped_be_state = m_being_expanded_states.min();
-
-                        // popped_be_state->Print();
-
-                        if (popped_be_state->f >= min_edge_ptr->parent_state_ptr->f)
-                            break;
-
-                        if (popped_be_state != min_edge_ptr->parent_state_ptr)
+                        if (id_state.second != min_edge_ptr->parent_state_ptr)
                         {
-                            auto h_diff = computeHeuristic(popped_be_state, min_edge_ptr->parent_state_ptr);
-
-                            if (min_edge_ptr->parent_state_ptr->g > popped_be_state->g + m_curr_eps*h_diff)
+                            auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                            if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
                             {
                                 min_edge_ptr = NULL;
                                 break;
@@ -797,8 +787,6 @@ int EPASE::improvePath(
                 SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
                 m_terminate = true;
                 m_recheck_flag = true;
-                auto now = clock::now();
-                elapsed_time = now - start_time;
                 m_lock.unlock();
                 return SUCCESS;
             }
@@ -826,7 +814,7 @@ int EPASE::improvePath(
         {
             min_edge_ptr->parent_state_ptr->is_visited += 1;
             min_edge_ptr->parent_state_ptr->being_expanded = true;
-            m_being_expanded_states.push(min_edge_ptr->parent_state_ptr);
+            m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
         }
         auto t_add_be_e = clock::now();
         m_insert_be_time += to_seconds(t_add_be_e-t_add_be_s);
@@ -1050,6 +1038,7 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
         
 
     }
+
   
 }
 
@@ -1061,6 +1050,7 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
     vector<int> succs;
 
     m_lock.unlock();
+
     auto t_succ_s = clock::now();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
     auto t_succ_e = clock::now();
@@ -1145,7 +1135,6 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
         }
 
     }
-
 }
 
 
@@ -1213,6 +1202,8 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
             }
             else
             {
+                // edge_ptr_real->Print("Edge does not exist in map", true);
+
                 delete edge_ptr_real;
             }
 
@@ -1303,9 +1294,10 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
         {
             edge_ptr->parent_state_ptr->being_expanded = false;
-            if (m_being_expanded_states.contains(edge_ptr->parent_state_ptr))
+            auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
+            if (it_state_be != m_being_expanded_states.end())
             {
-                m_being_expanded_states.erase(edge_ptr->parent_state_ptr);
+                m_being_expanded_states.erase(it_state_be);
                 notifyMainThread();
             }
         }
