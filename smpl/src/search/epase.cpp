@@ -43,7 +43,7 @@
 #include <smpl/console/console.h>
 
 #define VERBOSE 0
-#define PRINT_STATS 0
+#define PRINT_STATS 1
 
 using namespace std;
 
@@ -835,7 +835,8 @@ int EPASE::improvePath(
 
         if (VERBOSE) cout << "Num state expansions: " << m_num_state_expansions << endl;
 
-        if ((m_num_threads == 1) || (min_edge_ptr->action_idx == -1))
+        // if ((m_num_threads == 1) || (min_edge_ptr->action_idx == -1))
+        if (m_num_threads == 1)
         {
             expandEdge(min_edge_ptr, 0);
         }
