@@ -693,19 +693,8 @@ int EPASE::improvePath(
                                 min_edge_ptr = NULL;
                                 break;
                             }
-
-                            m_being_expanded_states.pop();
-                            popped_be_states.emplace_back(popped_be_state);
-                            
                         }
                     }
-
-
-                    for (const auto& popped_be_state: popped_be_states)
-                        m_being_expanded_states.push(popped_be_state);
-
-                    popped_be_states.clear();
-
                     auto t_be_check_e = clock::now();
                     m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                     m_num_be_check++;
