@@ -219,13 +219,13 @@ void ManipLatticeActionSpace::clear()
     // add all amps to the motion primitive set
     MotionPrimitive mprim;
 
-    mprim.type = MotionPrimitive::SNAP_TO_RPY;
-    mprim.action.clear();
-    m_mprims.push_back(mprim);
+    // mprim.type = MotionPrimitive::SNAP_TO_RPY;
+    // mprim.action.clear();
+    // m_mprims.push_back(mprim);
 
-    mprim.type = MotionPrimitive::SNAP_TO_XYZ;
-    mprim.action.clear();
-    m_mprims.push_back(mprim);
+    // mprim.type = MotionPrimitive::SNAP_TO_XYZ;
+    // mprim.action.clear();
+    // m_mprims.push_back(mprim);
 
     mprim.type = MotionPrimitive::SNAP_TO_XYZ_RPY;
     mprim.action.clear();
