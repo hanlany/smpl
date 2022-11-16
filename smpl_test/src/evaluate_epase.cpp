@@ -481,6 +481,9 @@ void run_experiments(int num_threads, std::string planner_name,
     std::vector<bool> success(goals.size(), false);
     std::vector<double> planning_times(goals.size(), -1);
     std::vector<double> solution_costs(goals.size(), -1);
+    std::vector<int> state_expansions(goals.size(), -1);
+    std::vector<int> edge_expansions(goals.size(), -1);
+    std::vector<int> edge_expansions_rate(goals.size(), -1);
 
     std::vector<std::vector<double>> starts = 
     {{0, 0, 0, -1.1356 ,0, -1.05, 0},
@@ -596,10 +599,22 @@ void run_experiments(int num_threads, std::string planner_name,
        
         moveit_msgs::PlanningScene planning_scene;
         planning_scene.robot_state = start_state;
-        if (!planner_interface->solve(planning_scene, req, res)) 
+
+
+        auto plan_found = planner_interface->solve(planning_scene, req, res);
+        auto planning_stats = planner_interface->getPlannerStats();
+
+        planning_times[idx] = planning_stats["initial solution planning time"];
+        solution_costs[idx] = planning_stats["solution cost"];
+        state_expansions[idx] = planning_stats["state_expansions"];
+        edge_expansions[idx] = planning_stats["edge_expansions"];
+        edge_expansions_rate[idx] = edge_expansions[idx]/planning_times[idx];
+
+        if ((!plan_found) || (res.trajectory.joint_trajectory.points.size() == 0))
         {
             // ROS_ERROR("Failed to plan.");
             success[idx] = false;
+            solution_costs[idx] = -1;
         }    
         else
         {
@@ -620,9 +635,7 @@ void run_experiments(int num_threads, std::string planner_name,
                 }
 
                 success[idx] = true;                
-                planning_times[idx] = planning_stats["initial solution planning time"];
-                solution_costs[idx] = planning_stats["solution cost"];
-            
+
                 // size_t pidx = 0;
                 // while (ros::ok()) {
                 //     auto& point = res.trajectory.joint_trajectory.points[pidx];
@@ -650,6 +663,8 @@ void run_experiments(int num_threads, std::string planner_name,
         std::cout << "Exp " << i 
         << " | success: " << success[i] 
         << " | time: " << planning_times[i] 
+        << " | edges: " << edge_expansions[i]
+        << " | edge evaluations rate: " << edge_expansions_rate[i]
         << " | cost: " << solution_costs[i]
         << std::endl;
     }
@@ -659,7 +674,7 @@ void run_experiments(int num_threads, std::string planner_name,
 
     for (int i = 0; i < goals.size(); ++i)
     {
-        if (planning_times[i] != -1)
+        if (solution_costs[i] != -1)
         {
             success_times.emplace_back(planning_times[i]);
             success_costs.emplace_back(solution_costs[i]);
@@ -669,8 +684,11 @@ void run_experiments(int num_threads, std::string planner_name,
 
     std::cout << "--------------------------------" << std::endl;
     std::cout << "Success rate: " << double(success_times.size())/planning_times.size() << std::endl;
-    std::cout << "Mean time: " << std::accumulate(success_times.begin(), success_times.end(), 0.0)/success_times.size() << std::endl;
-    std::cout << "Mean cost: " << std::accumulate(success_costs.begin(), success_costs.end(), 0.0)/success_costs.size() << std::endl;
+    std::cout << "Mean success time: " << std::accumulate(success_times.begin(), success_times.end(), 0.0)/success_times.size() << std::endl;
+    std::cout << "Mean time: " << std::accumulate(planning_times.begin(), planning_times.end(), 0.0)/planning_times.size() << std::endl;
+    std::cout << "Mean number of edge evaluations: " << std::accumulate(edge_expansions.begin(), edge_expansions.end(), 0.0)/edge_expansions.size() << std::endl;
+    std::cout << "Mean rate of edge evaluations: " << std::accumulate(edge_expansions_rate.begin(), edge_expansions_rate.end(), 0.0)/edge_expansions_rate.size() << std::endl;
+    std::cout << "Mean success cost: " << std::accumulate(success_costs.begin(), success_costs.end(), 0.0)/success_costs.size() << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
 
