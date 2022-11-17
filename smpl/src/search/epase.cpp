@@ -966,7 +966,10 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
 
     vector<int> succ_state_id, cost;
 
+    m_recheck_flag = true;
     m_lock.unlock();
+    m_cv.notify_one();
+
     // Evaluate the edge
     auto t_succ_s = clock::now();
     m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
@@ -1054,7 +1057,9 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
     vector<int> costs;
     vector<int> succs;
 
+    m_recheck_flag = true;
     m_lock.unlock();
+    m_cv.notify_one();
 
     auto t_succ_s = clock::now();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
@@ -1231,17 +1236,8 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
 
         }
 
-        // Expand cheap successors
-        auto t_start = clock::now(); 
-        expandCheapEdges(edge_ptr, cheap_succs, thread_id);
-        auto t_end = clock::now(); 
-        m_cheap_expansions_time += to_seconds(t_end - t_start);
-        m_num_cheap_expansions+=1;
 
-        edge_ptr->parent_state_ptr->num_expanded_successors += cheap_succs.size();
-        m_num_edge_evals+=cheap_succs.size();
-
-
+        // Add expensive edges to open
         for (auto sidx: expensive_succs) 
         {
             auto edge_ptr_real = new Edge();
@@ -1276,12 +1272,21 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
                         m_edge_open.decrease(edge_ptr_real);                    
                     else
                         m_edge_open.push(edge_ptr_real);                    
-
                 }
-
             }
-
         }
+
+        // Expand cheap successors
+        auto t_start = clock::now(); 
+        expandCheapEdges(edge_ptr, cheap_succs, thread_id);
+        auto t_end = clock::now(); 
+        m_cheap_expansions_time += to_seconds(t_end - t_start);
+        m_num_cheap_expansions+=1;
+
+        edge_ptr->parent_state_ptr->num_expanded_successors += cheap_succs.size();
+        m_num_edge_evals+=cheap_succs.size();
+
+
         // cout << "eopen size: " << m_edge_open.size();
 
         // num_proxy_expansions_++; 
@@ -1326,14 +1331,14 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         }
     }
 
-    m_recheck_flag = true;
 
     auto t_end = clock::now(); 
     m_expansions_time += to_seconds(t_end - t_start);
 
+    m_recheck_flag = true;
     m_lock.unlock();
-
     m_cv.notify_one();
+
     // getchar();
 }
 
