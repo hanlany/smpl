@@ -367,6 +367,8 @@ private:
         const clock::duration& elapsed_time) const;
 
     void initialize();
+    
+    void notifyMainThread();
 
     int improvePath(
         const clock::time_point& start_time,
