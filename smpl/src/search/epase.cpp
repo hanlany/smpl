@@ -966,10 +966,7 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
 
     vector<int> succ_state_id, cost;
 
-    m_recheck_flag = true;
     m_lock.unlock();
-    m_cv.notify_one();
-
     // Evaluate the edge
     auto t_succ_s = clock::now();
     m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
@@ -1048,6 +1045,8 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
 
     }
 
+    m_recheck_flag = true;
+    m_cv.notify_one();
   
 }
 
@@ -1057,10 +1056,7 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
     vector<int> costs;
     vector<int> succs;
 
-    m_recheck_flag = true;
     m_lock.unlock();
-    m_cv.notify_one();
-
     auto t_succ_s = clock::now();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
     auto t_succ_e = clock::now();
@@ -1151,6 +1147,9 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
         }
 
     }
+
+    m_recheck_flag = true;
+    m_cv.notify_one();
 }
 
 
@@ -1335,11 +1334,7 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
     auto t_end = clock::now(); 
     m_expansions_time += to_seconds(t_end - t_start);
 
-    m_recheck_flag = true;
     m_lock.unlock();
-    m_cv.notify_one();
-
-    // getchar();
 }
 
 // Recompute the f-values of all states in OPEN and reorder OPEN.
