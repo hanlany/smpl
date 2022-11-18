@@ -776,6 +776,8 @@ int EPASE::improvePath(
                 SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
                 m_terminate = true;
                 m_recheck_flag = true;
+                auto now = clock::now();
+                elapsed_time = now - start_time;
                 m_lock.unlock();
                 return SUCCESS;
             }
@@ -1027,7 +1029,6 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
         
 
     }
-
   
 }
 
@@ -1039,7 +1040,6 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
     vector<int> succs;
 
     m_lock.unlock();
-
     auto t_succ_s = clock::now();
     m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
     auto t_succ_e = clock::now();
@@ -1124,6 +1124,7 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
         }
 
     }
+
 }
 
 
@@ -1191,8 +1192,6 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
             }
             else
             {
-                // edge_ptr_real->Print("Edge does not exist in map", true);
-
                 delete edge_ptr_real;
             }
 
