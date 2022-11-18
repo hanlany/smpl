@@ -393,10 +393,10 @@ void ManipLatticeActionSpace::getCheapExpensiveSuccsIdxs(int state_id, std::vect
             // || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ) 
             // || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_RPY)
             // || (m_mprims[idx].type == MotionPrimitive::LONG_DISTANCE)
-            )
+            )*/
             expensive_succs.emplace_back(idx);
-        else*/
-            cheap_succs.emplace_back(idx);
+        /*else
+            cheap_succs.emplace_back(idx);*/
     }
 }
 
