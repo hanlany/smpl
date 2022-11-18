@@ -797,6 +797,7 @@ int EPASE::improvePath(
                 SMPL_DEBUG_NAMED(SLOG, "Found path to goal");
                 m_terminate = true;
                 m_recheck_flag = true;
+                elapsed_expansions = m_num_state_expansions; 
                 auto now = clock::now();
                 elapsed_time = now - start_time;
                 m_lock.unlock();
@@ -808,6 +809,7 @@ int EPASE::improvePath(
                 SMPL_DEBUG_NAMED(SLOG, "Ran out of time");
                 m_terminate = true;
                 m_recheck_flag = true;
+                elapsed_expansions = m_num_state_expansions; 
                 auto now = clock::now();
                 elapsed_time = now - start_time;
                 m_lock.unlock();
