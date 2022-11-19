@@ -207,19 +207,21 @@ robot_collision_model:
       spheres:
         - { name: rsh0, x: 0.13, y: 0.0, z: -0.04, radius: 0.16, priority: 5 }
     - link_name: r_upper_arm_roll_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rua0, x: 0.18, y: 0.0, z: -0.015, radius: 0.11, priority: 4 }
         - { name: rua1, x: 0.26, y: 0.00, z: -0.035, radius: 0.08, priority: 4 }
         - { name: rua2, x: 0.3275, y: 0.00, z: -0.035, radius: 0.08, priority: 4 }
         - { name: rua3, x: 0.40, y: 0.0, z: -0.0, radius: 0.105, priority: 2 }
 #    - link_name: r_elbow_flex_link
-#      auto: false
+#      auto: true
 #      spheres:
 #        - { name: fa0, x: 0.2, y: 0.005, z: 0.00, radius: 0.08, priority: 1 }
 #        - { name: fa1, x: 0.3, y: -0.005, z: 0.00, radius: 0.08, priority: 1 }
     - link_name: r_forearm_roll_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rfa0, x: 0.13, y: 0.0, z: 0.005, radius: 0.075, priority: 2 }
         - { name: rfa1, x: 0.20, y: 0.025, z: -0.01, radius: 0.055, priority: 3 }
@@ -229,7 +231,8 @@ robot_collision_model:
         - { name: rfa5, x: 0.32, y: 0.0225, z: -0.005, radius: 0.05, priority: 3 }
         - { name: rfa6, x: 0.32, y: -0.0225, z: -0.005, radius: 0.05, priority: 3 }
     - link_name: r_wrist_roll_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
 #        - { name: g0, x: 0.08, y: 0.0, z: 0.00, radius: 0.07, priority: 1 }
 #        - { name: g1, x: 0.14, y: 0.0, z: 0.00, radius: 0.07, priority: 5 }
@@ -238,22 +241,26 @@ robot_collision_model:
         - { name: rgr1, x: 0.0725, y: 0.0175, z: 0.00, radius: 0.04, priority: 2 }
         - { name: rgr2, x: 0.0925, y: 0.0, z: 0.00, radius: 0.04, priority: 2 }
     - link_name: r_gripper_l_finger_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rlf0, x: 0.03, y: 0.025, z: 0.00, radius: 0.04, priority: 1 }
         - { name: rlf1, x: 0.08, y: 0.0175, z: 0.00, radius: 0.035, priority: 1 }
     - link_name: r_gripper_r_finger_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rrf0, x: 0.03, y: -0.025, z: 0.00, radius: 0.04, priority: 1 }
         - { name: rrf1, x: 0.08, y: -0.0175, z: 0.00, radius: 0.035, priority: 1 }
     - link_name: r_gripper_r_finger_tip_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rrft0, x: 0.015, y: 0.005, z: 0.00, radius: 0.03, priority: 1 }
         - { name: rrft1, x: 0.035, y: 0.005, z: 0.00, radius: 0.02, priority: 1 }
     - link_name: r_gripper_l_finger_tip_link
-      auto: false
+      auto: true
+      radius: 0.02
       spheres:
         - { name: rlft0, x: 0.015, y: -0.005, z: 0.00, radius: 0.03, priority: 1 }
         - { name: rlft1, x: 0.035, y: -0.005, z: 0.00, radius: 0.02, priority: 1 }
