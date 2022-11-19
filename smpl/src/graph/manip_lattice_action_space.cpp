@@ -35,7 +35,7 @@
 // standard includes
 #include <limits>
 #include <numeric>
-
+#include <thread>
 // project includes
 #include <smpl/angles.h>
 #include <smpl/console/console.h>
@@ -419,6 +419,7 @@ bool ManipLatticeActionSpace::getAction(
     case MotionPrimitive::LONG_DISTANCE:  // fall-through
     case MotionPrimitive::SHORT_DISTANCE:
     {
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         Action action;
         if (!applyMotionPrimitive(parent, mp, action)) {
             return false;
@@ -448,6 +449,7 @@ bool ManipLatticeActionSpace::getAction(
     }
     case MotionPrimitive::SNAP_TO_XYZ_RPY:
     {
+        std::this_thread::sleep_for(std::chrono::microseconds(2000));
         if (planningSpace()->goal().type != GoalType::JOINT_STATE_GOAL) {
             return computeIkAction(
                     parent,
