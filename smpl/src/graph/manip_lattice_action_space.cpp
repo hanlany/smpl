@@ -389,13 +389,13 @@ void ManipLatticeActionSpace::getCheapExpensiveSuccsIdxs(int state_id, std::vect
 {
     for (int idx = 0; idx < m_mprims.size(); idx++)
     {
-        if ((m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ_RPY) 
+  /*      if ((m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ_RPY) 
             // || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_XYZ) 
             // || (m_mprims[idx].type == MotionPrimitive::SNAP_TO_RPY)
             // || (m_mprims[idx].type == MotionPrimitive::LONG_DISTANCE)
             )
             expensive_succs.emplace_back(idx);
-        else
+        else*/
             cheap_succs.emplace_back(idx);
     }
 }
