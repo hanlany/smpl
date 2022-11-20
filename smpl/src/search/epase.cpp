@@ -44,7 +44,7 @@
 
 #define VERBOSE 0
 #define PRINT_STATS 1
-
+#define DELAY 10
 using namespace std;
 
 namespace smpl {
@@ -982,7 +982,12 @@ void EPASE::expandExpensiveEdge(EdgePtrType edge_ptr, int thread_id)
     m_lock.unlock();
     // Evaluate the edge
     auto t_succ_s = clock::now();
-    m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+    for (int i = 0; i < DELAY; ++i)
+    {
+    	succ_state_id.clear();
+	cost.clear();
+	m_space->GetSucc(edge_ptr->parent_state_ptr->state_id, action_idx, &succ_state_id, &cost, thread_id);
+    }
     auto t_succ_e = clock::now();
     m_exp_get_succ_time += to_seconds(t_succ_e - t_succ_s);
 
@@ -1064,7 +1069,12 @@ void EPASE::expandCheapEdges(EdgePtrType& edge_ptr, vector<int>& action_idx_vec,
 
     m_lock.unlock();
     auto t_succ_s = clock::now();
-    m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
+    for (int i = 0; i < DELAY; ++i)
+    {
+	costs.clear();
+	succs.clear();
+	m_space->GetSuccs(edge_ptr->parent_state_ptr->state_id, action_idx_vec, &succs, &costs, thread_id);
+    }
     auto t_succ_e = clock::now();
     m_cheap_get_succ_time += to_seconds(t_succ_e - t_succ_s);
  
