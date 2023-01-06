@@ -279,11 +279,20 @@ void ShortcutPath(
         {
             JointPositionShortcutPathGenerator(rm, cc)
         };
+
+        // shortcut::ShortcutPath(
+        //         pin.begin(), pin.end(),
+        //         costs.begin(), costs.end(),
+        //         generators, generators + 1,
+        //         std::back_inserter(pout));
         shortcut::ShortcutPath(
                 pin.begin(), pin.end(),
                 costs.begin(), costs.end(),
                 generators, generators + 1,
-                std::back_inserter(pout));
+                std::back_inserter(pout),
+                1,
+                1,
+                [](double a, double b){return a <= b + 1e-6;});
     }   break;
     case ShortcutType::EUCLID_SPACE:
     {

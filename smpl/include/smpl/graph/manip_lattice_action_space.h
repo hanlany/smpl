@@ -94,6 +94,7 @@ public:
     bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) override;
     bool apply(const RobotState& parent, std::vector<Action>& actions, std::vector<int> action_idx_vec, int tidx) override;
     ///@}
+    double m_mprim_thresh[MotionPrimitive::NUMBER_OF_MPRIM_TYPES];
 
     void getNumSuccs(int& num_succs) override;
     void getCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs) override;
@@ -106,7 +107,6 @@ protected:
     InverseKinematicsInterface* m_ik_iface = nullptr;
 
     bool m_mprim_enabled[MotionPrimitive::NUMBER_OF_MPRIM_TYPES];
-    double m_mprim_thresh[MotionPrimitive::NUMBER_OF_MPRIM_TYPES];
 
     bool m_use_multiple_ik_solutions        = false;
     bool m_use_long_and_short_dist_mprims   = false;

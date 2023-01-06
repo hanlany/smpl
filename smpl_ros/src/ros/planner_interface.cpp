@@ -1257,7 +1257,7 @@ bool PlannerInterface::plan(double allowed_time, std::vector<RobotState>& path)
     std::vector<int> solution_state_ids;
 
     // reinitialize the search space
-    m_planner->force_planning_from_scratch();
+    m_planner->force_planning_from_scratch_and_free_memory();
 
     // plan
     b_ret = m_planner->replan(allowed_time, &solution_state_ids, &m_sol_cost);
