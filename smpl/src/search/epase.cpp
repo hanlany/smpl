@@ -1446,7 +1446,13 @@ void EPASE::exit()
 
     while (!m_edge_open.empty())
         m_edge_open.pop();
-    
+
+    for (auto& [k, e] : m_edge_map)
+    {
+        delete e; 
+    }
+    m_edge_map.clear();
+
     cout << "Epase exited" << endl;
 }
 
