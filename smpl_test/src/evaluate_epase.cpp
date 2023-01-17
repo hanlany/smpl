@@ -498,6 +498,20 @@ void run_experiments(int num_threads, std::string planner_name,
     {-0.868459, 1.08927, -1.07149, -1.84564, 2.89501, -0.595506, -2.51283}};
 
 
+    // for (auto& s : starts)
+    // {
+    //     s = {0, 0, 0, -1.1356, 0, -1.05, 0};
+    // }
+
+    // for (auto& [k,v] : goals)
+    // {
+    //     v = {0.4, -0.2, 0.36, 0, 0, 0};
+    // }
+
+
+    starts = std::vector<std::vector<double>>(10, std::vector<double>({0, 0, 0, -1.1356, 0, -1.05, 0}));
+    std::pair<std::string, std::vector<double>> gp = std::make_pair("goal", std::vector<double>({0.4, -0.2, 0.36, 0, 0, 0}));
+    goals = std::vector<std::pair<std::string, std::vector<double>>>(10, gp);
 
     for (int idx = 0; idx < goals.size(); ++idx)
     {
@@ -505,6 +519,16 @@ void run_experiments(int num_threads, std::string planner_name,
 
         auto goal = goals[idx].second;
         auto start = starts[idx];
+
+        std::cout << "Start: ";
+        for (auto s : start)
+            std::cout << s << ", ";
+        std::cout << std::endl;
+
+        std::cout << "Goal: ";
+        for (auto g : goal)
+            std::cout << g << ", ";
+        std::cout << std::endl;
 
         geometry_msgs::PoseStamped goal_pose;
         goal_pose.header.frame_id = planning_frame;
