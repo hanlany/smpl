@@ -618,7 +618,6 @@ void EPASE::initialize()
 
     m_edge_expansion_futures.clear();
     m_edge_expansion_futures.resize(1);
-    m_being_expanded_states.clear();
     
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
@@ -1452,6 +1451,8 @@ void EPASE::exit()
         delete e; 
     }
     m_edge_map.clear();
+
+    m_being_expanded_states.clear();
 
     cout << "Epase exited" << endl;
 }
