@@ -618,7 +618,6 @@ void EPASE::initialize()
 
     m_edge_expansion_futures.clear();
     m_edge_expansion_futures.resize(1);
-    m_being_expanded_states.clear();
     
     m_lock_vec = move(vector<LockType>(m_num_threads));
     m_cv_vec = move(vector<condition_variable>(m_num_threads));
@@ -1162,43 +1161,35 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         m_space->GetCheapExpensiveSuccsIdxs(edge_ptr->parent_state_ptr->state_id, cheap_succs, expensive_succs);
         edge_ptr->parent_state_ptr->num_successors = cheap_succs.size() + expensive_succs.size();
 
-
-        // if (edge_ptr->parent_state_ptr->is_visited > 1)
-        // {
-        //     edge_ptr->Print("Re-expanding state", true);
-        // }
-
         // Re-expand cheap successors
-        for (auto sit = cheap_succs.begin(); sit < cheap_succs.end(); ++sit)
-        {
-            auto edge_ptr_real = new Edge();
-            edge_ptr_real->action_idx = *sit;
-            edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
-            edge_ptr_real->exp_priority = edge_ptr->exp_priority;
-            edge_ptr_real->edge_id = getEdgeKey(edge_ptr_real);
-            auto it_edge = m_edge_map.find(edge_ptr_real->edge_id);
+        // for (auto sit = cheap_succs.begin(); sit < cheap_succs.end(); ++sit)
+        // {
+        //     auto edge_ptr_real = new Edge();
+        //     edge_ptr_real->action_idx = *sit;
+        //     edge_ptr_real->parent_state_ptr = edge_ptr->parent_state_ptr;
+        //     edge_ptr_real->exp_priority = edge_ptr->exp_priority;
+        //     edge_ptr_real->edge_id = getEdgeKey(edge_ptr_real);
+        //     auto it_edge = m_edge_map.find(edge_ptr_real->edge_id);
 
 
-            if (it_edge != m_edge_map.end())
-            {
-                delete edge_ptr_real;
-                edge_ptr_real = it_edge->second;
+        //     if (it_edge != m_edge_map.end())
+        //     {
+        //         delete edge_ptr_real;
+        //         edge_ptr_real = it_edge->second;
 
-                if (edge_ptr_real->child_state_ptr)
-                {
-                    // cout << " HERE" << endl;
-                    reexpandEdge(edge_ptr_real);
-                    sit = cheap_succs.erase(sit);
-                }
+        //         if (edge_ptr_real->child_state_ptr)
+        //         {
+        //             // cout << " HERE" << endl;
+        //             reexpandEdge(edge_ptr_real);
+        //             sit = cheap_succs.erase(sit);
+        //         }
                 
-            }
-            else
-            {
-                delete edge_ptr_real;
-            }
-
-
-        }
+        //     }
+        //     else
+        //     {
+        //         delete edge_ptr_real;
+        //     }
+        // }
 
 
         // Add expensive edges to open
@@ -1234,7 +1225,10 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
                     edge_ptr_real->exp_priority = edge_ptr->exp_priority;
 
                     if (m_edge_open.contains(edge_ptr_real))
+                    {
+                        throw runtime_error("Expensive edge should not already exist!");
                         m_edge_open.decrease(edge_ptr_real);                    
+                    }
                     else
                         m_edge_open.push(edge_ptr_real);                    
             
@@ -1431,7 +1425,15 @@ void EPASE::exit()
 
     while (!m_edge_open.empty())
         m_edge_open.pop();
-    
+
+    for (auto& [k, e] : m_edge_map)
+    {
+        delete e; 
+    }
+    m_edge_map.clear();
+
+    m_being_expanded_states.clear();
+
     cout << "Epase exited" << endl;
 }
 
