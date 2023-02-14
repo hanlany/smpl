@@ -682,39 +682,18 @@ int EPASE::improvePath(
                 
                     // Independence check of curr_edge with edges in BE
                     auto t_be_check_s = clock::now();
-
-                    while (!m_being_expanded_states.empty())
+                    for (auto& id_state : m_being_expanded_states)
                     {
-
-                        auto popped_be_state = m_being_expanded_states.min();
-
-                        // popped_be_state->Print();
-
-                        if (popped_be_state->f >= min_edge_ptr->parent_state_ptr->f)
-                            break;
-
-                        if (popped_be_state != min_edge_ptr->parent_state_ptr)
+                        if (id_state.second != min_edge_ptr->parent_state_ptr)
                         {
-                            auto h_diff = computeHeuristic(popped_be_state, min_edge_ptr->parent_state_ptr);
-
-                            if (min_edge_ptr->parent_state_ptr->g > popped_be_state->g + m_curr_eps*h_diff)
+                            auto h_diff = computeHeuristic(id_state.second, min_edge_ptr->parent_state_ptr);
+                            if (min_edge_ptr->parent_state_ptr->g > id_state.second->g + m_curr_eps*h_diff)
                             {
                                 min_edge_ptr = NULL;
                                 break;
                             }
-
-                            m_being_expanded_states.pop();
-                            popped_be_states.emplace_back(popped_be_state);
-                            
                         }
                     }
-
-
-                    for (const auto& popped_be_state: popped_be_states)
-                        m_being_expanded_states.push(popped_be_state);
-
-                    popped_be_states.clear();
-
                     auto t_be_check_e = clock::now();
                     m_be_check_time += to_seconds(t_be_check_e-t_be_check_s);
                     m_num_be_check++;
@@ -827,7 +806,7 @@ int EPASE::improvePath(
         {
             min_edge_ptr->parent_state_ptr->is_visited += 1;
             min_edge_ptr->parent_state_ptr->being_expanded = true;
-            m_being_expanded_states.push(min_edge_ptr->parent_state_ptr);
+            m_being_expanded_states.insert(make_pair(min_edge_ptr->parent_state_ptr->state_id, min_edge_ptr->parent_state_ptr));
         }
         auto t_add_be_e = clock::now();
         m_insert_be_time += to_seconds(t_add_be_e-t_add_be_s);
@@ -1299,9 +1278,10 @@ void EPASE::expandEdge(EdgePtrType& edge_ptr, int thread_id)
         if (edge_ptr->parent_state_ptr->num_expanded_successors == edge_ptr->parent_state_ptr->num_successors)
         {
             edge_ptr->parent_state_ptr->being_expanded = false;
-            if (m_being_expanded_states.contains(edge_ptr->parent_state_ptr))
+            auto it_state_be = m_being_expanded_states.find(edge_ptr->parent_state_ptr->state_id);
+            if (it_state_be != m_being_expanded_states.end())
             {
-                m_being_expanded_states.erase(edge_ptr->parent_state_ptr);
+                m_being_expanded_states.erase(it_state_be);
                 notifyMainThread();
             }
         }
