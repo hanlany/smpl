@@ -58,8 +58,8 @@ target_link_libraries(visualizer_test ${catkin_LIBRARIES} smpl::smpl)
 add_executable(csv_parser_test src/csv_parser_test.cpp)
 target_link_libraries(csv_parser_test ${catkin_LIBRARIES} smpl::smpl)
 
-add_executable(heap_test src/heap_test.cpp)
-target_link_libraries(heap_test ${Boost_LIBRARIES} ${catkin_LIBRARIES} smpl::smpl)
+#add_executable(heap_test src/heap_test.cpp)
+#target_link_libraries(heap_test ${Boost_LIBRARIES} ${catkin_LIBRARIES} smpl::smpl)
 
 add_executable(egraph_test src/egraph_test.cpp)
 target_link_libraries(egraph_test ${Boost_LIBRARIES} ${catkin_LIBRARIES} smpl::smpl)
