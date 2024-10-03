@@ -241,10 +241,17 @@ bool KDLRobotModel::computeIKSearch(
     RobotState& solution,
     int tidx)
 {
+    // Define tolerances for position and angle-NEW!!!!!!!!! (need to add to launch somehow)
+    double position_tolerance = 0.02; // 2 cm tolerance in XYZ
+    double angle_tolerance = 0.1; // 0.1 radians for joint angles
+
+
     // transform into kinematics and convert to kdl
     auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], m_kinematics_link);
     KDL::Frame frame_des;
     tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
+
+    KDL::Frame adjusted_frame = frame_des;
 
     // seed configuration
     for (size_t i = 0; i < start.size(); i++) {
@@ -260,6 +267,8 @@ bool KDLRobotModel::computeIKSearch(
     auto loop_time = 0.0;
     auto count = 0;
 
+    // std::cout << "frame des is = " << frame_des << std::endl;
+
     auto num_positive_increments =
             (int)((GetSolverMinPosition(this, m_free_angle) - initial_guess) /
                     this->m_search_discretization);
@@ -268,19 +277,42 @@ bool KDLRobotModel::computeIKSearch(
                     this->m_search_discretization);
 
     while (loop_time < this->m_timeout) {
-        if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) >= 0) {
-            NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
-            solution.resize(start.size());
-            for (size_t i = 0; i < solution.size(); ++i) {
-                solution[i] = m_jnt_pos_out_vec[tidx](i);
+        std::cout << "timeout time is= " << loop_time << std::endl;
+        // Loop through angle tolerances for the free joint
+        for (double angle_offset = -angle_tolerance; angle_offset <= angle_tolerance; angle_offset += 0.01) {
+            // Create a new joint position configuration
+            KDL::JntArray adjusted_jnt_pos = m_jnt_pos_in_vec[tidx]; // Copy the current configuration
+            adjusted_jnt_pos(m_free_angle) += angle_offset; // Adjust the free joint angle
+            // loop_time = to_seconds(smpl::clock::now() - start_time);
+            // if (loop_time > this->m_timeout+10){
+            //     break;
+            // }
+            // Call CartToJnt with the adjusted joint positions and frame
+            if (m_ik_solver_vec[tidx]->CartToJnt(adjusted_jnt_pos, adjusted_frame, m_jnt_pos_out_vec[tidx]) >= 0) {
+                // Found a valid solution
+                NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]); // Normalize the output angles if necessary
+
+                // Store the solution
+                solution.resize(m_jnt_pos_out_vec[tidx].rows());
+                for (size_t i = 0; i < solution.size(); ++i) {
+                    solution[i] = m_jnt_pos_out_vec[tidx](i);
+                }
+                return true; // Success
             }
-            return true;
         }
-        if (!getCount(count, num_positive_increments, -num_negative_increments)) {
-            return false;
-        }
+        // if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) >= 0) {
+        //     NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
+        //     solution.resize(start.size());
+        //     for (size_t i = 0; i < solution.size(); ++i) {
+        //         solution[i] = m_jnt_pos_out_vec[tidx](i);
+        //     }
+        //     return true;
+        // }
+        // if (!getCount(count, num_positive_increments, -num_negative_increments)) {
+        //     return false;
+        // }
         m_jnt_pos_in_vec[tidx](m_free_angle) = initial_guess + this->m_search_discretization * count;
-        ROS_DEBUG("%d, %f", count, m_jnt_pos_in_vec[tidx](m_free_angle));
+        // ROS_DEBUG("%d, %f", count, m_jnt_pos_in_vec[tidx](m_free_angle));
         loop_time = to_seconds(smpl::clock::now() - start_time);
     }
 
