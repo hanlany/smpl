@@ -397,7 +397,7 @@ bool WorkspaceLatticeEGraph::loadExperienceGraph(const std::string& path)
     for (auto dit = boost::filesystem::directory_iterator(p);
         dit != boost::filesystem::directory_iterator(); ++dit)
     {
-        auto& filepath = dit->path().generic_string();
+        const auto& filepath = dit->path().generic_string();
         std::vector<RobotState> egraph_path;
         if (!ParseExperienceGraphFile(filepath, robot(), egraph_path)) {
             continue;

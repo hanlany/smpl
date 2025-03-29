@@ -239,7 +239,7 @@ bool ManipLatticeEgraph::loadExperienceGraph(const std::string& path)
     for (auto dit = boost::filesystem::directory_iterator(p);
         dit != boost::filesystem::directory_iterator(); ++dit)
     {
-        auto& filepath = dit->path().generic_string();
+        const auto& filepath = dit->path().generic_string();
         std::vector<RobotState> egraph_states;
         if (!parseExperienceGraphFile(filepath, egraph_states)) {
             continue;

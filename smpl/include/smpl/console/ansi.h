@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ostream>
+#include <cstdint>
 
 namespace smpl {
 namespace console {
